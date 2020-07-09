@@ -78,6 +78,6 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	return body.Question, body.Result, nil
 }
 
-func (s *Session) Inject(facts []Fact) (*Response, error) {
-	return nil, errors.New("Not implemented")
+func (s *Session) Inject() error {
+	return errors.New("Not implemented")
 }
