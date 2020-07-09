@@ -40,22 +40,26 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 		return nil, err
 	}
 
-	/*
-		var body struct {
-			Err []string
-		}
-	*/
-	var body map[string]interface{}
+	var body struct {
+		Err []string
+		Id  string
+	}
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
 		return nil, err
 	}
 
-	if err, found := body["err"]; found {
-		return nil, fmt.Errorf("API returned errors: %s", err)
+	if len(body.Err) != 0 {
+		// For some reason this is an array. Bad API, bad!
+		return nil, fmt.Errorf("API returned errors: %s", body.Err[0])
+	}
+	if body.Id == "" {
+		return nil, errors.New("API returned no error but no ID either!")
 	}
 
 	return &Session{
+		id: body.Id,
+
 		Client: c,
 	}, nil
 }
