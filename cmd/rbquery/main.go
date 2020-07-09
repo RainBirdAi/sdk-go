@@ -46,9 +46,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	response, err := session.Query(sub, rel, obj)
+	question, answer, err := session.Query(sub, rel, obj)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(response)
+	fmt.Println(question)
+	fmt.Println(answer)
 }

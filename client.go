@@ -41,17 +41,18 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 	}
 
 	var body struct {
-		Err []string
-		Id  string
+		Error string
+		Id    string
 	}
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(body.Err) != 0 {
-		// For some reason this is an array. Bad API, bad!
-		return nil, fmt.Errorf("API returned errors: %s", body.Err[0])
+	// TODO: This is written to match API documentation, but the actual returned
+	// data doesn't match that
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 	if body.Id == "" {
 		return nil, errors.New("API returned no error but no ID either!")
