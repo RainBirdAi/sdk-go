@@ -5,8 +5,6 @@ type Client struct {
 	EnvironmentURL string
 }
 
-func (c *Client) NewSession(kmID string) (*Session, error) {
-	return &Session{
-		Client: c,
-	}, nil
+func (c *Client) NewSession(kmID string) *Session {
+	return &Session{Client: c}
 }

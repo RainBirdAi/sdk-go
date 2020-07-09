@@ -8,7 +8,7 @@ type Session struct {
 	Client *Client
 }
 
-func (s *Session) Query(fact Fact) (*Response, error) {
+func (s *Session) Query(sub, rel, obj string) (*Response, error) {
 	return nil, errors.New("Not implemented")
 }
 
