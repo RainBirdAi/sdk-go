@@ -15,7 +15,7 @@ type Session struct {
 	Client *Client
 }
 
-func (s *Session) Query(sub, rel, obj string) (*Question, *Answer, error) {
+func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	payloadS := struct {
 		Session_id   string `json:"session_id"`
 		Subject      string `json:"subject,omitempty"`
@@ -31,8 +31,6 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *Answer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
-	fmt.Println(string(payload))
 
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -62,8 +60,8 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *Answer, error) {
 
 	var body struct {
 		Error    string
-		Question Question
-		// TODO: Answer
+		Question *Question
+		Result   *[]Answer
 	}
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
@@ -77,8 +75,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *Answer, error) {
 		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 
-	// TODO: Answers
-	return &body.Question, nil, nil
+	return body.Question, body.Result, nil
 }
 
 func (s *Session) Inject(facts []Fact) (*Response, error) {
