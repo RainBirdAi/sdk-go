@@ -46,10 +46,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	question, answer, err := session.Query(sub, rel, obj)
+	question, answers, err := session.Query(sub, rel, obj)
 	if err != nil {
 		panic(err)
+	} else if question != nil {
+		fmt.Printf("QUESTION: %s\n", question)
+	} else if answers != nil {
+		fmt.Println("ANSWERS:")
+		for _, a := range *answers {
+			fmt.Printf("  %s", a)
+		}
+		fmt.Println("")
 	}
-	fmt.Println(question)
-	fmt.Println(answer)
 }

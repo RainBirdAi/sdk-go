@@ -27,7 +27,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		Relationship: rel,
 		Object:       obj,
 	}
-	payload, err := json.Marshal(&payloadS) // TODO: stream
+	payload, err := json.Marshal(&payloadS)
 	if err != nil {
 		return nil, nil, err
 	}

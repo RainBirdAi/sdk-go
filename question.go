@@ -14,8 +14,12 @@ type Question struct {
 	DataType string
 	// KnownAnswers TODO
 	Plural       bool
-	Promps       string
+	Prompt       string
 	Relationship string
 	Subject      string
 	Type         string
+}
+
+func (q Question) String() string {
+	return q.Prompt
 }
