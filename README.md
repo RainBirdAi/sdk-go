@@ -1,20 +1,27 @@
-Golang SDK for Rainbird's reasoning engine
+Rainbird SDK (Go)
+===
 
-For more information: https://rainbird.ai
+For more information on the company, our unique reasoning engine, and the benefits of understandable, explainable AI: https://rainbird.ai
 
-Sample usage:
+**Usage**
+
+Create a client using your API key and pointing to the desired environment (commonly Community or Enterprise):
 
 ```go
 client := sdk.Client{
 	APIKey:         os.Getenv("RB_API_KEY"),
 	EnvironmentURL: sdk.EnvCommunity,
 }
+```
 
+Use that client to create a session with a knowledge map by its ID:
+
+```go
 session, err := client.NewSession(kmID)
-if err != nil {
-	...
-}
+```
 
+Query that session, and Rainbird will either ask you a question or give you answers:
+
+```go
 question, answers, err := session.Query("John", "speaks", "")
-...
 ```
