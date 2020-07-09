@@ -29,8 +29,6 @@ func (s *Session) Inject(facts []InjectFact) error {
 		return err
 	}
 
-	fmt.Println(string(payload))
-
 	req, err := http.NewRequest(
 		http.MethodPost,
 		s.Client.EnvironmentURL+"/"+s.ID+"/inject",
