@@ -15,6 +15,44 @@ type Session struct {
 	Client *Client
 }
 
+type InjectFact struct {
+	Subject      string `json:"subject"`
+	Relationship string `json:"relationship"`
+	Object       string `json:"object"`
+	Certainty    string `json:"cf"`
+}
+
+func (s *Session) Inject(facts []InjectFact) error {
+	// TODO: Inject takes invalid JSON and doesn't match the API docs!
+	payload, err := json.Marshal(&facts)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(payload))
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		s.Client.EnvironmentURL+"/"+s.ID+"/inject",
+		bytes.NewReader(payload),
+	)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode >= 400 {
+		// TODO: This should mean we have an error message but not the case
+		return fmt.Errorf("API returned an error code")
+	}
+	return nil
+}
+
 func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	payloadS := struct {
 		Session_id   string `json:"session_id"`
@@ -75,8 +113,4 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	}
 
 	return body.Question, body.Result, nil
-}
-
-func (s *Session) Inject() error {
-	return errors.New("Not implemented")
 }

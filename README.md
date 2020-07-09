@@ -1,9 +1,8 @@
-Rainbird SDK (Go)
-===
+# Rainbird SDK (Go)
 
 For more information on the company, our unique reasoning engine, and the benefits of understandable, explainable AI: https://rainbird.ai
 
-**Usage**
+## Usage
 
 Create a client using your API key and pointing to the desired environment (commonly Community or Enterprise):
 

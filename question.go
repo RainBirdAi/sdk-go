@@ -1,5 +1,7 @@
 package sdk
 
+import "fmt"
+
 type Question struct {
 	AllowCF      bool
 	AllowUnknown bool
@@ -17,9 +19,19 @@ type Question struct {
 	Prompt       string
 	Relationship string
 	Subject      string
+	Object       string
 	Type         string
 }
 
 func (q Question) String() string {
-	return q.Prompt
+	sub := q.Subject
+	if sub == "" {
+		sub = "?"
+	}
+	obj := q.Object
+	if obj == "" {
+		obj = "?"
+	}
+
+	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
 }

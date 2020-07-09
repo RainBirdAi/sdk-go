@@ -30,6 +30,18 @@ func main() {
 	case "help":
 		usage()
 		os.Exit(0)
+	case "inject":
+		if len(os.Args) != 7 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdInject(
+			os.Args[2],
+			os.Args[3],
+			os.Args[4],
+			os.Args[5],
+			os.Args[6],
+		)
 	case "query":
 		if len(os.Args) != 6 {
 			usage()
@@ -52,6 +64,26 @@ func main() {
 	if err != nil {
 		fmt.Printf("ERR: %s\n", err)
 	}
+}
+
+func cmdInject(sessionId, sub, rel, obj, cf string) error {
+	client := sdk.Client{
+		EnvironmentURL: sdk.EnvCommunity,
+	}
+
+	session, err := client.ResumeSession(sessionId)
+	if err != nil {
+		return err
+	}
+
+	return session.Inject([]sdk.InjectFact{
+		{
+			Subject:      sub,
+			Relationship: rel,
+			Object:       obj,
+			Certainty:    cf,
+		},
+	})
 }
 
 func cmdQuery(sessionId, sub, rel, obj string) error {
@@ -89,9 +121,7 @@ func cmdQuery(sessionId, sub, rel, obj string) error {
 func cmdStart(kmID string) error {
 	apiKey := os.Getenv("RB_API_KEY")
 	if apiKey == "" {
-		return errors.New(
-			"Missing environment variable RB_API_KEY - you must set this",
-		)
+		return errors.New("Missing required environment variable RB_API_KEY")
 	}
 
 	client := sdk.Client{
