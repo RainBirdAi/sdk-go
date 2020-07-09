@@ -10,7 +10,7 @@ import (
 )
 
 type Session struct {
-	id string
+	ID string
 
 	Client *Client
 }
@@ -22,7 +22,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		Relationship string `json:"relationship"`
 		Object       string `json:"object,omitempty"`
 	}{
-		Session_id:   s.id,
+		Session_id:   s.ID,
 		Subject:      sub,
 		Relationship: rel,
 		Object:       obj,
@@ -34,7 +34,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		s.Client.EnvironmentURL+"/"+s.id+"/query",
+		s.Client.EnvironmentURL+"/"+s.ID+"/query",
 		bytes.NewReader(payload),
 	)
 	if err != nil {

@@ -59,8 +59,11 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 	}
 
 	return &Session{
-		id: body.Id,
-
 		Client: c,
+		ID:     body.Id,
 	}, nil
+}
+
+func (c *Client) ResumeSession(sessionID string) (*Session, error) {
+	return &Session{ID: sessionID, Client: c}, nil
 }

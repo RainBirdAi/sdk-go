@@ -1,4 +1,5 @@
-Golang SDK for Rainbird's reasoning engine
+Rainbird SDK (Go)
+===
 
 For more information: https://rainbird.ai
 
