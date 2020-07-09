@@ -5,6 +5,8 @@ import (
 )
 
 type Session struct {
+	id string
+
 	Client *Client
 }
 
