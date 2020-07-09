@@ -71,7 +71,6 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	// TODO: This is written to match API documentation, but the actual returned
 	// data doesn't match that
 	if resp.StatusCode >= 400 {
-		fmt.Println(string(rawBody))
 		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 

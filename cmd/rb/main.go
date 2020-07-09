@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -9,24 +10,15 @@ import (
 
 func usage() {
 	fmt.Println("Usage:")
-	fmt.Println("===")
-	fmt.Println("")
-	fmt.Printf("%s help\n", os.Args[0])
-	fmt.Println("- Give this help text")
-	fmt.Println("")
-	fmt.Printf("%s start <kmid>\n", os.Args[0])
-	fmt.Println("- Start a new session for knowledge map <kmid>, receive a session ID for querying")
-	fmt.Println("")
-	fmt.Printf("%s query <session> <subject> <relationship> <object>\n", os.Args[0])
-	fmt.Println("- Make a query against <session>, receive question or answers")
+	fmt.Printf("  %s help\n", os.Args[0])
+	fmt.Println("    - Give this help text")
+	fmt.Printf("  %s start <kmid>\n", os.Args[0])
+	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
+	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
+	fmt.Println("    - Make a query against <session>, receive question or answers")
 }
 
 func main() {
-	apiKey := os.Getenv("RB_API_KEY")
-	if apiKey == "" {
-		panic("Missing environment variable RB_API_KEY - you must set this")
-	}
-
 	if len(os.Args) == 1 {
 		usage()
 		os.Exit(0)
@@ -49,7 +41,7 @@ func main() {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdStart(apiKey, os.Args[2])
+		err = cmdStart(os.Args[2])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -94,7 +86,14 @@ func cmdQuery(sessionId, sub, rel, obj string) error {
 	return nil
 }
 
-func cmdStart(apiKey, kmID string) error {
+func cmdStart(kmID string) error {
+	apiKey := os.Getenv("RB_API_KEY")
+	if apiKey == "" {
+		return errors.New(
+			"Missing environment variable RB_API_KEY - you must set this",
+		)
+	}
+
 	client := sdk.Client{
 		APIKey:         apiKey,
 		EnvironmentURL: sdk.EnvCommunity,
