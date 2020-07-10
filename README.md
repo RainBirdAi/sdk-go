@@ -24,3 +24,7 @@ Query that session, and Rainbird will either ask you a question or give you answ
 ```go
 question, answers, err := session.Query("John", "speaks", "")
 ```
+
+## Known issues
+
+Rainbird's API documentation currently describes a response format for errors that the API doesn't adhere to. This SDK is written to meet the specification.
