@@ -12,6 +12,8 @@ func usage() {
 	fmt.Println("Usage:")
 	fmt.Printf("  %s help\n", os.Args[0])
 	fmt.Println("    - Give this help text")
+	fmt.Printf("  %s inject <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
+	fmt.Println("    - Inject a fect into <session>")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
 	fmt.Println("    - Make a query against <session>, receive question or answers")
 	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
