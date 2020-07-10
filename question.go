@@ -24,17 +24,14 @@ type Question struct {
 }
 
 func (q Question) String() string {
-	var sub, obj string
+	sub := q.Subject
+	obj := q.Object
 
-	if q.Subject.String() == "" {
+	if sub == "" {
 		sub = "?"
-	} else {
-		sub = q.Subject.String()
 	}
-	if q.Object.String() == "" {
+	if obj == "" {
 		obj = "?"
-	} else {
-		obj = q.Object.String()
 	}
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
