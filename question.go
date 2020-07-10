@@ -11,15 +11,15 @@ type Question struct {
 		FSID        uint64
 		Name        string
 		Type        string
-		Value       fmt.Stringer
+		Value       string
 	}
 	DataType     string
 	KnownAnswers []Answer
 	Plural       bool
 	Prompt       string
 	Relationship string
-	Subject      fmt.Stringer
-	Object       fmt.Stringer
+	Subject      string
+	Object       string
 	Type         string
 }
 
