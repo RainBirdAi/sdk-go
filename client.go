@@ -67,3 +67,29 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 func (c *Client) ResumeSession(sessionID string) (*Session, error) {
 	return &Session{ID: sessionID, Client: c}, nil
 }
+
+func (c *Client) Version() (string, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/version",
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode >= 400 {
+		// TODO: This should mean we have an error message but not the case
+		return "", fmt.Errorf("API returned an error code")
+	}
+
+	apiVersion, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(apiVersion), err
+}

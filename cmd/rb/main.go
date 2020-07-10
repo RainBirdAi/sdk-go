@@ -12,12 +12,14 @@ func usage() {
 	fmt.Println("Usage:")
 	fmt.Printf("  %s help\n", os.Args[0])
 	fmt.Println("    - Give this help text")
-	fmt.Printf("  %s start <kmid>\n", os.Args[0])
-	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
 	fmt.Println("    - Make a query against <session>, receive question or answers")
+	fmt.Printf("  %s start <kmid>\n", os.Args[0])
+	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
+	fmt.Printf("  %s version\n")
+	fmt.Println("    - Report CLI and API versions")
 }
 
 func main() {
@@ -62,6 +64,12 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdUndo(os.Args[2])
+	case "version":
+		if len(os.Args) != 2 {
+			usage()
+			os.Exit(0)
+		}
+		cmdVersion()
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -169,4 +177,19 @@ func cmdUndo(sessionId string) error {
 		fmt.Println("")
 	}
 	return nil
+}
+
+func cmdVersion() {
+	client := sdk.Client{
+		EnvironmentURL: sdk.EnvCommunity,
+	}
+	api, err := client.Version()
+
+	fmt.Printf("SDK: %s\n", sdk.Version)
+	if err != nil {
+		fmt.Println("API: ERR!")
+		fmt.Println(err)
+		return
+	}
+	fmt.Printf("API: %s\n", api)
 }
