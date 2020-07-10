@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type Session struct {
@@ -86,6 +87,52 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	}
 	if resp.Body == nil {
 		return nil, nil, errors.New("Empty response body")
+	}
+
+	// TODO: Stream this rather than ReadAll
+	rawBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var body struct {
+		Error    string
+		Question *Question
+		Result   *[]Answer
+	}
+	err = json.Unmarshal(rawBody, &body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: This is written to match API documentation, but the actual returned
+	// data doesn't match that
+	if resp.StatusCode >= 400 {
+		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
+	}
+
+	return body.Question, body.Result, nil
+}
+
+func (s *Session) Undo() (*Question, *[]Answer, error) {
+	req, err := http.NewRequest(
+		http.MethodPost,
+		s.Client.EnvironmentURL+"/"+s.ID+"/undo",
+		strings.NewReader("{}"),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp.StatusCode >= 400 {
+		// TODO: This should mean we have an error message but not the case
+		return nil, nil, fmt.Errorf("API returned an error code")
 	}
 
 	// TODO: Stream this rather than ReadAll

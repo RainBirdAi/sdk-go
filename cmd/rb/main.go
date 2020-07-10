@@ -16,6 +16,8 @@ func usage() {
 	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
 	fmt.Println("    - Make a query against <session>, receive question or answers")
+	fmt.Printf("  %s undo <session>\n", os.Args[0])
+	fmt.Println("    - Roll back <session> by one interaction")
 }
 
 func main() {
@@ -54,6 +56,12 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdStart(os.Args[2])
+	case "undo":
+		if len(os.Args) != 3 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdUndo(os.Args[2])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -135,5 +143,30 @@ func cmdStart(kmID string) error {
 	}
 
 	fmt.Println(session.ID)
+	return nil
+}
+
+func cmdUndo(sessionId string) error {
+	client := sdk.Client{
+		EnvironmentURL: sdk.EnvCommunity,
+	}
+
+	session, err := client.ResumeSession(sessionId)
+	if err != nil {
+		return err
+	}
+
+	question, answers, err := session.Undo()
+	if err != nil {
+		panic(err)
+	} else if question != nil {
+		fmt.Printf("QUESTION: %s\n", question)
+	} else if answers != nil {
+		fmt.Println("ANSWERS:")
+		for _, a := range *answers {
+			fmt.Printf("  %s", a)
+		}
+		fmt.Println("")
+	}
 	return nil
 }
