@@ -22,7 +22,7 @@ func usage() {
 	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
-	fmt.Printf("  %s version\n")
+	fmt.Printf("  %s version\n", os.Args[0])
 	fmt.Println("    - Report CLI and API versions")
 }
 
