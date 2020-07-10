@@ -10,11 +10,11 @@ type MetaData struct {
 type Answer struct {
 	Certainty        uint64
 	FactID           string
-	Object           fmt.Stringer
+	Object           string
 	ObjectMetadata   map[string][]MetaData
 	Relationship     string
 	RelationshipType string
-	Subject          fmt.Stringer
+	Subject          string
 	SubjectMetadata  map[string][]MetaData
 }
 

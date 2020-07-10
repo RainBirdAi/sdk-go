@@ -14,6 +14,8 @@ func usage() {
 	fmt.Println("    - Give this help text")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
 	fmt.Println("    - Make a query against <session>, receive question or answers")
+	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
+	fmt.Println("    - Response to pending question in <session>")
 	fmt.Printf("  %s start <kmid>\n", os.Args[0])
 	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
@@ -52,6 +54,18 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdQuery(os.Args[2], os.Args[3], os.Args[4], os.Args[5])
+	case "response":
+		if len(os.Args) != 7 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdResponse(
+			os.Args[2],
+			os.Args[3],
+			os.Args[4],
+			os.Args[5],
+			os.Args[6],
+		)
 	case "start":
 		if len(os.Args) != 3 {
 			usage()
@@ -82,12 +96,12 @@ func main() {
 	}
 }
 
-func cmdInject(sessionId, sub, rel, obj, cf string) error {
+func cmdInject(sessionID, sub, rel, obj, cf string) error {
 	client := sdk.Client{
 		EnvironmentURL: sdk.EnvCommunity,
 	}
 
-	session, err := client.ResumeSession(sessionId)
+	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -100,12 +114,12 @@ func cmdInject(sessionId, sub, rel, obj, cf string) error {
 	}})
 }
 
-func cmdQuery(sessionId, sub, rel, obj string) error {
+func cmdQuery(sessionID, sub, rel, obj string) error {
 	client := sdk.Client{
 		EnvironmentURL: sdk.EnvCommunity,
 	}
 
-	session, err := client.ResumeSession(sessionId)
+	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -119,7 +133,32 @@ func cmdQuery(sessionId, sub, rel, obj string) error {
 
 	question, answers, err := session.Query(sub, rel, obj)
 	if err != nil {
-		panic(err)
+		return err
+	} else if question != nil {
+		fmt.Printf("QUESTION: %s\n", question)
+	} else if answers != nil {
+		fmt.Println("ANSWERS:")
+		for _, a := range *answers {
+			fmt.Printf("  %s", a)
+		}
+		fmt.Println("")
+	}
+	return nil
+}
+
+func cmdResponse(sessionID, sub, rel, obj, cf string) error {
+	client := sdk.Client{
+		EnvironmentURL: sdk.EnvCommunity,
+	}
+
+	session, err := client.ResumeSession(sessionID)
+	if err != nil {
+		return err
+	}
+
+	question, answers, err := session.Response(sub, rel, obj, cf)
+	if err != nil {
+		return err
 	} else if question != nil {
 		fmt.Printf("QUESTION: %s\n", question)
 	} else if answers != nil {
@@ -152,19 +191,19 @@ func cmdStart(kmID string) error {
 	return nil
 }
 
-func cmdUndo(sessionId string) error {
+func cmdUndo(sessionID string) error {
 	client := sdk.Client{
 		EnvironmentURL: sdk.EnvCommunity,
 	}
 
-	session, err := client.ResumeSession(sessionId)
+	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
 	}
 
 	question, answers, err := session.Undo()
 	if err != nil {
-		panic(err)
+		return err
 	} else if question != nil {
 		fmt.Printf("QUESTION: %s\n", question)
 	} else if answers != nil {
