@@ -13,8 +13,8 @@ type Question struct {
 		Type        string
 		Value       fmt.Stringer
 	}
-	DataType string
-	// KnownAnswers TODO
+	DataType     string
+	KnownAnswers []Answer
 	Plural       bool
 	Prompt       string
 	Relationship string
