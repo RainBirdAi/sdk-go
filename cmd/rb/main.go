@@ -92,14 +92,12 @@ func cmdInject(sessionId, sub, rel, obj, cf string) error {
 		return err
 	}
 
-	return session.Inject([]sdk.InjectFact{
-		{
-			Subject:      sub,
-			Relationship: rel,
-			Object:       obj,
-			Certainty:    cf,
-		},
-	})
+	return session.Inject([]sdk.InjectFact{{
+		Subject:      sub,
+		Relationship: rel,
+		Object:       obj,
+		Certainty:    cf,
+	}})
 }
 
 func cmdQuery(sessionId, sub, rel, obj string) error {

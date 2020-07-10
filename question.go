@@ -18,19 +18,23 @@ type Question struct {
 	Plural       bool
 	Prompt       string
 	Relationship string
-	Subject      string
-	Object       string
+	Subject      fmt.Stringer
+	Object       fmt.Stringer
 	Type         string
 }
 
 func (q Question) String() string {
-	sub := q.Subject
-	if sub == "" {
+	var sub, obj string
+
+	if q.Subject.String() == "" {
 		sub = "?"
+	} else {
+		sub = q.Subject.String()
 	}
-	obj := q.Object
-	if obj == "" {
+	if q.Object.String() == "" {
 		obj = "?"
+	} else {
+		obj = q.Object.String()
 	}
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
