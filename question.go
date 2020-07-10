@@ -11,7 +11,7 @@ type Question struct {
 		FSID        uint64
 		Name        string
 		Type        string
-		Value       string
+		Value       fmt.Stringer
 	}
 	DataType string
 	// KnownAnswers TODO
