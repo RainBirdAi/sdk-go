@@ -3,5 +3,5 @@ package sdk
 const (
 	EnvCommunity  = "https://api.rainbird.ai"
 	EnvEnterprise = "https://api-enterprise.rainbird.ai"
-	Version       = "0.0.0"
+	Version       = "0.1.0"
 )
