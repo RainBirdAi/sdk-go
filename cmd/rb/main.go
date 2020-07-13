@@ -24,12 +24,25 @@ func usage() {
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
 	fmt.Println("    - Report CLI and API versions")
+	fmt.Println("Environment variables:")
+	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
+	fmt.Println("  RB_ENGINE - Select engine (Default is API's default, usually Yolanda)")
+	fmt.Println("  RB_API_URL - API URL (Default is https://api.rainbird.ai)")
+}
+
+var client = sdk.Client{
+	APIKey:         os.Getenv("RB_API_KEY"),
+	EnvironmentURL: sdk.EnvCommunity,
 }
 
 func main() {
 	if len(os.Args) == 1 {
 		usage()
 		os.Exit(0)
+	}
+
+	if os.Getenv("RB_API_URL") != "" {
+		client.EnvironmentURL = os.Getenv("RB_API_URL")
 	}
 
 	var err error
@@ -99,10 +112,6 @@ func main() {
 }
 
 func cmdInject(sessionID, sub, rel, obj, cf string) error {
-	client := sdk.Client{
-		EnvironmentURL: sdk.EnvCommunity,
-	}
-
 	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
@@ -117,10 +126,6 @@ func cmdInject(sessionID, sub, rel, obj, cf string) error {
 }
 
 func cmdQuery(sessionID, sub, rel, obj string) error {
-	client := sdk.Client{
-		EnvironmentURL: sdk.EnvCommunity,
-	}
-
 	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
@@ -149,10 +154,6 @@ func cmdQuery(sessionID, sub, rel, obj string) error {
 }
 
 func cmdResponse(sessionID, sub, rel, obj, cf string) error {
-	client := sdk.Client{
-		EnvironmentURL: sdk.EnvCommunity,
-	}
-
 	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
@@ -174,14 +175,8 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 }
 
 func cmdStart(kmID string) error {
-	apiKey := os.Getenv("RB_API_KEY")
-	if apiKey == "" {
+	if client.APIKey == "" {
 		return errors.New("Missing required environment variable RB_API_KEY")
-	}
-
-	client := sdk.Client{
-		APIKey:         apiKey,
-		EnvironmentURL: sdk.EnvCommunity,
 	}
 
 	session, err := client.NewSession(kmID)
@@ -194,10 +189,6 @@ func cmdStart(kmID string) error {
 }
 
 func cmdUndo(sessionID string) error {
-	client := sdk.Client{
-		EnvironmentURL: sdk.EnvCommunity,
-	}
-
 	session, err := client.ResumeSession(sessionID)
 	if err != nil {
 		return err
@@ -219,11 +210,7 @@ func cmdUndo(sessionID string) error {
 }
 
 func cmdVersion() {
-	client := sdk.Client{
-		EnvironmentURL: sdk.EnvCommunity,
-	}
 	api, err := client.Version()
-
 	fmt.Printf("SDK: %s\n", sdk.Version)
 	if err != nil {
 		fmt.Println("API: ERR!")
