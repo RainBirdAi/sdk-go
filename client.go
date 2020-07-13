@@ -10,6 +10,7 @@ import (
 
 type Client struct {
 	APIKey         string
+	Engine         string
 	EnvironmentURL string
 }
 
@@ -59,13 +60,13 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 	}
 
 	return &Session{
-		Client: c,
 		ID:     body.Id,
+		client: c,
 	}, nil
 }
 
 func (c *Client) ResumeSession(sessionID string) (*Session, error) {
-	return &Session{ID: sessionID, Client: c}, nil
+	return &Session{ID: sessionID, client: c}, nil
 }
 
 func (c *Client) Version() (string, error) {

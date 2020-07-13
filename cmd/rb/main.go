@@ -32,6 +32,7 @@ func usage() {
 
 var client = sdk.Client{
 	APIKey:         os.Getenv("RB_API_KEY"),
+	Engine:         os.Getenv("RB_ENGINE"),
 	EnvironmentURL: sdk.EnvCommunity,
 }
 

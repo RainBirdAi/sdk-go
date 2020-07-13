@@ -13,7 +13,7 @@ import (
 type Session struct {
 	ID string
 
-	Client *Client
+	client *Client
 }
 
 type InjectFact struct {
@@ -32,7 +32,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		s.Client.EnvironmentURL+"/"+s.ID+"/inject",
+		s.client.EnvironmentURL+"/"+s.ID+"/inject",
 		bytes.NewReader(payload),
 	)
 	if err != nil {
@@ -40,6 +40,9 @@ func (s *Session) Inject(facts []InjectFact) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if s.client.Engine != "" {
+		req.Header.Set("x-rainbird-engine", s.client.Engine)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -69,7 +72,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		s.Client.EnvironmentURL+"/"+s.ID+"/query",
+		s.client.EnvironmentURL+"/"+s.ID+"/query",
 		bytes.NewReader(payload),
 	)
 	if err != nil {
@@ -78,6 +81,9 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
+	if s.client.Engine != "" {
+		req.Header.Set("x-rainbird-engine", s.client.Engine)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -141,7 +147,7 @@ func (s *Session) Response(
 
 	req, err := http.NewRequest(
 		http.MethodPost,
-		s.Client.EnvironmentURL+"/"+s.ID+"/response",
+		s.client.EnvironmentURL+"/"+s.ID+"/response",
 		bytes.NewReader(payload),
 	)
 	if err != nil {
@@ -150,6 +156,9 @@ func (s *Session) Response(
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
+	if s.client.Engine != "" {
+		req.Header.Set("x-rainbird-engine", s.client.Engine)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -187,7 +196,7 @@ func (s *Session) Response(
 func (s *Session) Undo() (*Question, *[]Answer, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
-		s.Client.EnvironmentURL+"/"+s.ID+"/undo",
+		s.client.EnvironmentURL+"/"+s.ID+"/undo",
 		strings.NewReader("{}"),
 	)
 	if err != nil {
@@ -195,6 +204,9 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if s.client.Engine != "" {
+		req.Header.Set("x-rainbird-engine", s.client.Engine)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
