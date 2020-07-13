@@ -26,6 +26,9 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 
 	req.SetBasicAuth(c.APIKey, "")
 	req.Header.Set("Accept", "application/json")
+	if c.Engine != "" {
+		req.Header.Set("x-rainbird-engine", c.Engine)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -41,6 +44,11 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 		return nil, err
 	}
 
+	// TODO: The API doesn't match documentation. Workaround.
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+	}
+
 	var body struct {
 		Error string
 		Id    string
@@ -50,11 +58,6 @@ func (c *Client) NewSession(kmID string) (*Session, error) {
 		return nil, err
 	}
 
-	// TODO: This is written to match API documentation, but the actual returned
-	// data doesn't match that
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API returned an error: %s", body.Error)
-	}
 	if body.Id == "" {
 		return nil, errors.New("API returned no error but no ID either!")
 	}
