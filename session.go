@@ -99,6 +99,11 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		return nil, nil, err
 	}
 
+	// TODO: The API doesn't match documentation. Workaround.
+	if resp.StatusCode >= 400 {
+		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+	}
+
 	var body struct {
 		Error    string
 		Question *Question
@@ -107,12 +112,6 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	// TODO: This is written to match API documentation, but the actual returned
-	// data doesn't match that
-	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 
 	return body.Question, body.Result, nil
@@ -174,6 +173,11 @@ func (s *Session) Response(
 		return nil, nil, err
 	}
 
+	// TODO: The API doesn't match documentation. Workaround.
+	if resp.StatusCode >= 400 {
+		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+	}
+
 	var body struct {
 		Error    string
 		Question *Question
@@ -182,12 +186,6 @@ func (s *Session) Response(
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	// TODO: This is written to match API documentation, but the actual returned
-	// data doesn't match that
-	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 
 	return body.Question, body.Result, nil
@@ -212,15 +210,16 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if resp.StatusCode >= 400 {
-		// TODO: This should mean we have an error message but not the case
-		return nil, nil, fmt.Errorf("API returned an error code")
-	}
 
 	// TODO: Stream this rather than ReadAll
 	rawBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// TODO: The API doesn't match documentation. Workaround.
+	if resp.StatusCode >= 400 {
+		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
 	}
 
 	var body struct {
@@ -231,12 +230,6 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	err = json.Unmarshal(rawBody, &body)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	// TODO: This is written to match API documentation, but the actual returned
-	// data doesn't match that
-	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", body.Error)
 	}
 
 	return body.Question, body.Result, nil
