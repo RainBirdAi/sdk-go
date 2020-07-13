@@ -12,6 +12,8 @@ func usage() {
 	fmt.Println("Usage:")
 	fmt.Printf("  %s help\n", os.Args[0])
 	fmt.Println("    - Give this help text")
+	fmt.Printf("  %s config\n", os.Args[0])
+	fmt.Println("    - Show running configuration and exit")
 	fmt.Printf("  %s inject <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
 	fmt.Println("    - Inject a fect into <session>")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
@@ -52,6 +54,12 @@ func main() {
 	case "help":
 		usage()
 		os.Exit(0)
+	case "config":
+		if len(os.Args) != 2 {
+			usage()
+			os.Exit(0)
+		}
+		cmdConfig()
 	case "inject":
 		if len(os.Args) != 7 {
 			usage()
@@ -109,6 +117,30 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("ERR: %s\n", err)
+	}
+}
+
+func cmdConfig() {
+	envVars := []struct {
+		name     string
+		required bool
+	}{
+		{"RB_API_KEY", true},
+		{"RB_API_URL", false},
+		{"RB_ENGINE", false},
+	}
+
+	for _, v := range envVars {
+		fmt.Printf("%s\t", v.name)
+		if os.Getenv(v.name) != "" {
+			fmt.Printf("%s\n", os.Getenv(v.name))
+			continue
+		}
+		if !v.required {
+			fmt.Println("-- default --")
+			continue
+		}
+		fmt.Println("!! missing !!")
 	}
 }
 
