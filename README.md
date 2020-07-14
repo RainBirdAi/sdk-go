@@ -27,4 +27,4 @@ question, answers, err := session.Query("John", "speaks", "")
 
 ## Known issues
 
-Rainbird's API documentation currently describes a response format for errors that the API doesn't adhere to. This SDK is written to meet the specification.
+Rainbird's API documentation currently describes a response format for errors that the API doesn't adhere to. This SDK works around those limitations where possible.

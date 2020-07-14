@@ -26,6 +26,7 @@ func usage() {
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
 	fmt.Println("    - Report CLI and API versions")
+	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
 	fmt.Println("  RB_ENGINE - Select engine (Default is API's default, usually Yolanda)")
