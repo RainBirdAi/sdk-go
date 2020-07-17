@@ -2,17 +2,19 @@ package sdk
 
 import "fmt"
 
+type QuestionConcept struct {
+	ConceptType string
+	FSID        uint64
+	Name        string
+	Type        string
+	Value       string
+}
+
 type Question struct {
 	AllowCF      bool
 	AllowUnknown bool
 	CanAdd       bool
-	Concepts     []struct {
-		ConceptType string
-		FSID        uint64
-		Name        string
-		Type        string
-		Value       string
-	}
+	Concepts     []QuestionConcept
 	DataType     string
 	KnownAnswers []Answer
 	Plural       bool
