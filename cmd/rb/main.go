@@ -236,7 +236,7 @@ func cmdUndo(sessionID string) error {
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
 		for _, a := range *answers {
-			fmt.Printf("  %s", a)
+			fmt.Printf("*  %s\n", a)
 		}
 		fmt.Println("")
 	}
