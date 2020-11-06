@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	sdk "gitlab.com/rainbird-ai/rainbird-sdk"
+	sdk "gitlab.com/rainbird-ai/sdk-go"
 )
 
 func usage() {
