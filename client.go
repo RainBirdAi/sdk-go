@@ -14,10 +14,18 @@ type Client struct {
 	EnvironmentURL string
 }
 
-func (c *Client) NewSession(kmID string) (*Session, error) {
+const NoContext string = ""
+
+func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
+	url := c.EnvironmentURL + "/start/" + kmID
+
+	if contextID != NoContext {
+		url += "?contextid=" + contextID
+	}
+
 	req, err := http.NewRequest(
 		http.MethodGet,
-		c.EnvironmentURL+"/start/"+kmID,
+		url,
 		nil,
 	)
 	if err != nil {

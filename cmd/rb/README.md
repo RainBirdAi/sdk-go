@@ -7,7 +7,7 @@
 `rb help` gives a list of available commands and information on usage. An example of a complete session with the Speaks map might be:
 
 ```go
-> export RB_SESSION=$(rb start aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee) && echo $RB_SESSION
+> export RB_SESSION=$(rb start aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee "") && echo $RB_SESSION
 ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj
 > rb query $RB_SESSION John speaks ?
 QUESTION: Where does John live? (John - lives in - ?)
