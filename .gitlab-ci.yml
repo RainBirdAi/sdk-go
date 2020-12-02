@@ -1,0 +1,17 @@
+image: golang:latest
+
+variables:
+  REPO_NAME: gitlab.com/rainbird-ai/sdk-go
+
+stages:
+  - test
+
+unit:
+  stage: test
+  script:
+  - go test -race -cover ./...
+
+benchmark:
+  stage: test
+  script:
+  - go test -test.run=XXX -bench=. -benchmem ./...
