@@ -20,8 +20,8 @@ func usage() {
 	fmt.Println("    - Make a query against <session>, receive question or answers")
 	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
 	fmt.Println("    - Response to pending question in <session>")
-	fmt.Printf("  %s start <kmid>\n", os.Args[0])
-	fmt.Println("    - Start a new session for knowledge map <kmid>, receive a session ID for querying")
+	fmt.Printf("  %s start <kmid> <contextid>\n", os.Args[0])
+	fmt.Println("    - Start a new session for knowledge map <kmid> and context ID <contextid>, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
@@ -92,11 +92,11 @@ func main() {
 			os.Args[6],
 		)
 	case "start":
-		if len(os.Args) != 3 {
+		if len(os.Args) != 4 {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdStart(os.Args[2])
+		err = cmdStart(os.Args[2], os.Args[3])
 	case "undo":
 		if len(os.Args) != 3 {
 			usage()
@@ -208,12 +208,12 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 	return nil
 }
 
-func cmdStart(kmID string) error {
+func cmdStart(kmID string, contextID string) error {
 	if client.APIKey == "" {
 		return errors.New("Missing required environment variable RB_API_KEY")
 	}
 
-	session, err := client.NewSession(kmID)
+	session, err := client.NewSession(kmID, contextID)
 	if err != nil {
 		return err
 	}

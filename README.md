@@ -13,10 +13,10 @@ client := sdk.Client{
 }
 ```
 
-Use that client to create a session with a knowledge map by its ID:
+Use that client to create a session with a knowledge map by its ID. By passing a non empty contextID, the session will be connected to the context scope with that ID:
 
 ```go
-session, err := client.NewSession(kmID)
+session, err := client.NewSession(kmID, contextID)
 ```
 
 Query that session, and Rainbird will either ask you a question or give you answers:
