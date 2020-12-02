@@ -17,6 +17,17 @@ type Answer struct {
 	SubjectMetadata map[string][]MetaData
 }
 
+type KnownAnswer struct {
+	CF           uint64
+	Object       string
+	Relationship Relationship
+	Subject      string
+}
+
+type Relationship struct {
+	Name string
+}
+
 func (a Answer) String() string {
 	return fmt.Sprintf(
 		"%s - %s - %s [%3d%%]",
