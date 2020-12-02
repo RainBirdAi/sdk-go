@@ -16,7 +16,7 @@ type Question struct {
 	CanAdd       bool
 	Concepts     []QuestionConcept
 	DataType     string
-	KnownAnswers []Answer
+	KnownAnswers []KnownAnswer
 	Plural       bool
 	Prompt       string
 	Relationship string
