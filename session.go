@@ -23,6 +23,13 @@ type InjectFact struct {
 	Certainty    string `json:"cf"`
 }
 
+type QAnswer struct {
+	Subject      string `json:"subject"`
+	Relationship string `json:"relationship"`
+	Object       string `json:"object"`
+	CF           string `json:"cf"`
+}
+
 func (s *Session) Inject(facts []InjectFact) error {
 	// TODO: Inject takes invalid JSON and doesn't match the API docs!
 	payload, err := json.Marshal(&facts)
@@ -117,27 +124,11 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	return body.Question, body.Result, nil
 }
 
-func (s *Session) Response(
-	sub, rel, obj, certainty string,
-) (*Question, *[]Answer, error) {
-	type rAnswer struct {
-		Subject      string `json:"subject"`
-		Relationship string `json:"relationship"`
-		Object       string `json:"object"`
-		CF           string `json:"cf"`
-	}
-
+func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	payloadS := struct {
-		Answers []rAnswer `json:"answers"`
+		Answers []QAnswer `json:"answers"`
 	}{
-		Answers: []rAnswer{
-			{
-				Subject:      sub,
-				Relationship: rel,
-				Object:       obj,
-				CF:           certainty,
-			},
-		},
+		Answers: answers,
 	}
 	payload, err := json.Marshal(&payloadS)
 	if err != nil {

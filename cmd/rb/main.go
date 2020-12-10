@@ -193,7 +193,12 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 		return err
 	}
 
-	question, answers, err := session.Response(sub, rel, obj, cf)
+	question, answers, err := session.Response([]sdk.QAnswer{{
+		Subject:      sub,
+		Relationship: rel,
+		Object:       obj,
+		CF:           cf,
+	}})
 	if err != nil {
 		return err
 	} else if question != nil {

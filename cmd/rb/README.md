@@ -9,7 +9,7 @@
 ```go
 > export RB_SESSION=$(rb start aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee "") && echo $RB_SESSION
 ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj
-> rb query $RB_SESSION John speaks ?
+> rb query $RB_SESSION John speaks ""
 QUESTION: Where does John live? (John - lives in - ?)
 > rb response $RB_SESSION John 'lives in' England 100
 ANSWERS:
