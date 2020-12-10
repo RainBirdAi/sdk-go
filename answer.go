@@ -19,7 +19,7 @@ type Answer struct {
 
 type KnownAnswer struct {
 	CF           uint64
-	Object       string
+	Object       interface{}
 	Relationship Relationship
 	Subject      string
 }

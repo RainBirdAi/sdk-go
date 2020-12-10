@@ -5,9 +5,9 @@ import "fmt"
 type QuestionConcept struct {
 	ConceptType string
 	FSID        uint64
-	Name        string
+	Name        interface{}
 	Type        string
-	Value       string
+	Value       interface{}
 }
 
 type Question struct {
