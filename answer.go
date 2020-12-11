@@ -10,7 +10,7 @@ type MetaData struct {
 type Answer struct {
 	Certainty       uint64
 	FactID          string
-	Object          string
+	Object          interface{}
 	ObjectMetadata  map[string][]MetaData
 	Relationship    string
 	Subject         string
