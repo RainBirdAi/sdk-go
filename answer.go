@@ -18,7 +18,7 @@ type Answer struct {
 }
 
 type KnownAnswer struct {
-	CF           uint64
+	CF           float64
 	Object       interface{}
 	Relationship Relationship
 	Subject      string
