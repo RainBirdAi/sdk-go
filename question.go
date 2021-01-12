@@ -2,6 +2,7 @@ package sdk
 
 import "fmt"
 
+// QuestionConcept is how the engine expressed concepts when asking a Question
 type QuestionConcept struct {
 	ConceptType string
 	FSID        uint64
@@ -10,6 +11,8 @@ type QuestionConcept struct {
 	Value       interface{}
 }
 
+// Question is the structure of a request from the engine when asking for more
+// information from the user
 type Question struct {
 	AllowCF      bool
 	AllowUnknown bool
@@ -25,16 +28,20 @@ type Question struct {
 	Type         string
 }
 
-func (q Question) String() string {
+// String makes *Question satisfy fmt.Stringer
+func (q *Question) String() string {
 	sub := q.Subject
-	obj := q.Object
-
 	if sub == "" {
 		sub = "?"
 	}
+
+	obj := q.Object
 	if obj == "" {
 		obj = "?"
 	}
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
 }
+
+// Satisfy interfaces
+var _ fmt.Stringer = (*Question)(nil)

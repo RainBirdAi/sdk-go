@@ -9,7 +9,20 @@ stages:
 unit:
   stage: test
   script:
-  - go test -race -cover ./...
+  - go get -u github.com/jstemmer/go-junit-report
+  - go test -race -coverprofile=coverage.out -v ./... 2>&1 | tee >(go-junit-report > report.xml)
+  - go tool cover -html=coverage.out -o coverage.html
+  artifacts:
+    paths:
+    - coverage.html
+    reports:
+      junit: report.xml
+
+lint:
+  stage: test
+  script:
+  - go get -u golang.org/x/lint/golint
+  - golint -set_exit_status ./...
 
 benchmark:
   stage: test

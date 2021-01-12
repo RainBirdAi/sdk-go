@@ -10,12 +10,14 @@ import (
 	"strings"
 )
 
+// Session is a started engine interaction with a knowledge map
 type Session struct {
 	ID string
 
 	client *Client
 }
 
+// InjectFact is the structure of facts to add to a session via the Inject call
 type InjectFact struct {
 	Subject      string `json:"subject"`
 	Relationship string `json:"relationship"`
@@ -23,6 +25,7 @@ type InjectFact struct {
 	Certainty    string `json:"cf"`
 }
 
+// QAnswer is a user's answer to an Question from the engine
 type QAnswer struct {
 	Subject      string `json:"subject"`
 	Relationship string `json:"relationship"`
@@ -30,6 +33,13 @@ type QAnswer struct {
 	CF           string `json:"cf"`
 }
 
+var (
+	// ErrQueryBlankRelationship is given when relationship is "" in a query
+	// A relationship must always be provided.
+	ErrQueryBlankRelationship = errors.New("Blank Relationship")
+)
+
+// Inject adds facts to a running session
 func (s *Session) Inject(facts []InjectFact) error {
 	// TODO: Inject takes invalid JSON and doesn't match the API docs!
 	payload, err := json.Marshal(&facts)
@@ -51,18 +61,26 @@ func (s *Session) Inject(facts []InjectFact) error {
 		req.Header.Set("x-rainbird-engine", s.client.Engine)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
 		return err
 	}
+	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		// TODO: This should mean we have an error message but not the case
-		return fmt.Errorf("API returned an error code")
+		return fmt.Errorf("API returned error %d", resp.StatusCode)
 	}
 	return nil
 }
 
+// Query is the first interaction with a session, setting a goal. Leaving sub,
+// obj and/or both blank ("") will instruct the engine in what you wish to find
+// out. For example, s.Query("John", "speaks", "") will instruct the engine
+// that you wish to find out which languages John speaks.
 func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
+	if rel == "" {
+		return nil, nil, ErrQueryBlankRelationship
+	}
+
 	payloadS := struct {
 		Subject      string `json:"subject,omitempty"`
 		Relationship string `json:"relationship"`
@@ -92,7 +110,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		req.Header.Set("x-rainbird-engine", s.client.Engine)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,9 +124,13 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		return nil, nil, err
 	}
 
-	// TODO: The API doesn't match documentation. Workaround.
+	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+		return nil, nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
 	}
 
 	var body struct {
@@ -124,6 +146,8 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	return body.Question, body.Result, nil
 }
 
+// Response submits a user response to the engine, and must be a response to
+// a Question the engine has asked.
 func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	payloadS := struct {
 		Answers []QAnswer `json:"answers"`
@@ -150,7 +174,7 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 		req.Header.Set("x-rainbird-engine", s.client.Engine)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -164,9 +188,13 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 		return nil, nil, err
 	}
 
-	// TODO: The API doesn't match documentation. Workaround.
+	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+		return nil, nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
 	}
 
 	var body struct {
@@ -182,6 +210,8 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	return body.Question, body.Result, nil
 }
 
+// Undo steps the engine back in the case of a mistake, for example if a
+// Response has been given in error.
 func (s *Session) Undo() (*Question, *[]Answer, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -197,7 +227,7 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 		req.Header.Set("x-rainbird-engine", s.client.Engine)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -208,9 +238,13 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 		return nil, nil, err
 	}
 
-	// TODO: The API doesn't match documentation. Workaround.
+	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+		return nil, nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
 	}
 
 	var body struct {
