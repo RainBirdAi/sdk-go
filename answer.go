@@ -2,11 +2,13 @@ package sdk
 
 import "fmt"
 
+// MetaData is a collection of additional information about Concepts
 type MetaData struct {
 	Data     string
 	DataType string
 }
 
+// Answer is data provided by the engine as a result/decision
 type Answer struct {
 	Certainty       uint64
 	FactID          string
@@ -17,23 +19,31 @@ type Answer struct {
 	SubjectMetadata map[string][]MetaData
 }
 
+// KnownAnswer is a hint provided by the engine for information it already knows
 type KnownAnswer struct {
 	CF           float64
 	Object       interface{}
-	Relationship Relationship
-	Subject      string
+	Relationship struct {
+		Name string
+	}
+	Subject string
 }
 
-type Relationship struct {
-	Name string
-}
+// String makes *Answer satisfy fmt.Stringer
+func (a *Answer) String() string {
+	obj := a.Object
+	if obj == nil {
+		obj = ""
+	}
 
-func (a Answer) String() string {
 	return fmt.Sprintf(
-		"%s - %s - %s [%3d%%]",
+		"%s - %s - %v [%3d%%]",
 		a.Subject,
 		a.Relationship,
-		a.Object,
+		obj,
 		a.Certainty,
 	)
 }
+
+// Satisfy interfaces
+var _ fmt.Stringer = (*Answer)(nil)

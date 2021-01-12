@@ -1,7 +1,11 @@
 package sdk
 
 const (
-	EnvCommunity  = "https://api.rainbird.ai"
+	// EnvCommunity is the default engine URL
+	EnvCommunity = "https://api.rainbird.ai"
+	// EnvEnterprise is the URL used by premium Enterprise clients
 	EnvEnterprise = "https://api-enterprise.rainbird.ai"
-	Version       = "0.6.4"
 )
+
+// Version is the version of this SDK
+const Version = "0.6.4"

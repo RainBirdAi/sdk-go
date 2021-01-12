@@ -1,6 +1,8 @@
 # Rainbird SDK (Go)
 
-For more information on the company, our unique reasoning engine, and the benefits of understandable, explainable AI: https://rainbird.ai
+Beautiful, automatically generated code documentation is available at https://pkg.go.dev/gitlab.com/rainbird-ai/sdk-go
+
+For more information on the company, our unique reasoning engine, and the benefits of understandable, explainable AI please visit our corporate site at https://rainbird.ai
 
 ## Usage
 
@@ -28,3 +30,9 @@ question, answers, err := session.Query("John", "speaks", "")
 ## Known issues
 
 Rainbird's API documentation currently describes a response format for errors that the API doesn't adhere to. This SDK works around those limitations where possible.
+
+The engine and supporting documentation currently used very mixed terminology. For reference, this SDK will be endeavouring to move terminology to be more in line with current accepted terminology.
+* The user makes a Query
+* The engine asks a Question
+* The user provides an Answer
+* The engine gives a Result

@@ -180,7 +180,7 @@ func cmdQuery(sessionID, sub, rel, obj string) error {
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
 		for _, a := range *answers {
-			fmt.Printf("  %s", a)
+			fmt.Printf("  %s", &a)
 		}
 		fmt.Println("")
 	}
@@ -206,7 +206,7 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
 		for _, a := range *answers {
-			fmt.Printf("  %s", a)
+			fmt.Printf("  %s", &a)
 		}
 		fmt.Println("")
 	}
@@ -241,7 +241,7 @@ func cmdUndo(sessionID string) error {
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
 		for _, a := range *answers {
-			fmt.Printf("*  %s\n", a)
+			fmt.Printf("*  %s\n", &a)
 		}
 		fmt.Println("")
 	}
