@@ -302,6 +302,44 @@ func TestSessionResponse(t *testing.T) {
 			expectAnswers: nil,
 			expectErr:     nil,
 		},
+		{
+			description: "Bad request",
+			answers: []QAnswer{
+				{
+					Subject:      "John",
+					Relationship: "Speaks",
+					Object:       "English",
+					CF:           "100",
+				},
+			},
+
+			expectCalls:    2,
+			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:   http.StatusBadRequest,
+			responseBody:   "Foo bar baz",
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description: "Internal server error",
+			answers: []QAnswer{
+				{
+					Subject:      "John",
+					Relationship: "Speaks",
+					Object:       "English",
+					CF:           "100",
+				},
+			},
+
+			expectCalls:    2,
+			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   "Foo bar baz",
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+		},
 	}
 
 	for _, tc := range testCases {
