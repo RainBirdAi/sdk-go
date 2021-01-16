@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -137,6 +138,36 @@ func TestSessionQuery(t *testing.T) {
 				},
 			},
 			expectErr: nil,
+		},
+		{
+			description: "Handle bad request",
+			sub:         "John",
+			rel:         "lives in",
+			obj:         "",
+
+			responseCode: http.StatusBadRequest,
+			responseBody: "Foo bar baz",
+			expectCalls:  2,
+			expectBody:   `{"subject":"John","relationship":"lives in"}`,
+
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      fmt.Errorf("API returned error 400: Foo bar baz"),
+		},
+		{
+			description: "Handle internal server error",
+			sub:         "John",
+			rel:         "lives in",
+			obj:         "",
+
+			responseCode: http.StatusInternalServerError,
+			responseBody: `{ "error": "some JSON returned" }`,
+			expectCalls:  2,
+			expectBody:   `{"subject":"John","relationship":"lives in"}`,
+
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      fmt.Errorf(`API returned error 500: { "error": "some JSON returned" }`),
 		},
 	}
 
