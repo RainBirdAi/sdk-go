@@ -442,6 +442,24 @@ func TestSessionUndo(t *testing.T) {
 			expectAnswers: nil,
 			expectErr:     nil,
 		},
+		{
+			description: "Bad request",
+
+			responseCode:   http.StatusBadRequest,
+			responseBody:   "Foo bar baz",
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description: "Internal server error",
+
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   "Foo bar baz",
+			expectQuestion: nil,
+			expectAnswers:  nil,
+			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+		},
 	}
 
 	for _, tc := range testCases {
