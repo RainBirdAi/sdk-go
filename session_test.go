@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,6 +29,22 @@ func TestSessionInject(t *testing.T) {
 			expectCalls:  2,
 			expectBody:   "[]",
 			expectErr:    nil,
+		},
+		{
+			description:  "Bad request",
+			facts:        []InjectFact{},
+			responseCode: http.StatusBadRequest,
+			expectCalls:  2,
+			expectBody:   "[]",
+			expectErr:    errors.New("API returned error 400"),
+		},
+		{
+			description:  "Bad request",
+			facts:        []InjectFact{},
+			responseCode: http.StatusInternalServerError,
+			expectCalls:  2,
+			expectBody:   "[]",
+			expectErr:    errors.New("API returned error 500"),
 		},
 	}
 
