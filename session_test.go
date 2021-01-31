@@ -148,11 +148,14 @@ func TestSessionInject(t *testing.T) {
 }
 
 func TestSessionQuery(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
 		description string
 		sub         string
 		rel         string
 		obj         string
+		engine      *string
 
 		responseCode int
 		responseBody string
@@ -177,6 +180,38 @@ func TestSessionQuery(t *testing.T) {
 			sub:         "John",
 			rel:         "lives in",
 			obj:         "",
+
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"result": [{
+					"certainty": 100,
+					"factID": "thisisthefactid",
+					"object": "England",
+					"relationship": "lives in",
+					"subject": "John"
+				}]
+			}`,
+			expectCalls: 2,
+			expectBody:  `{"subject":"John","relationship":"lives in"}`,
+
+			expectQuestion: nil,
+			expectAnswers: &[]Answer{
+				{
+					Subject:      "John",
+					Relationship: "lives in",
+					Object:       "England",
+					Certainty:    100,
+					FactID:       "thisisthefactid",
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description: "John - lives in - ? leading to answer (alt engine)",
+			sub:         "John",
+			rel:         "lives in",
+			obj:         "",
+			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -256,6 +291,13 @@ func TestSessionQuery(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Accept"))
 						assert.Equal(t, "/success-id/query", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
+						if tc.engine != nil {
+							assert.Equal(
+								t,
+								"alternate",
+								r.Header.Get("x-rainbird-engine"),
+							)
+						}
 
 						body, err := ioutil.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -276,6 +318,9 @@ func TestSessionQuery(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
 
 			session, err := client.NewSession("kmid", "")
 			require.Nil(t, err)
@@ -290,9 +335,12 @@ func TestSessionQuery(t *testing.T) {
 }
 
 func TestSessionResponse(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
 		description string
 		answers     []QAnswer
+		engine      *string
 
 		expectCalls  int64
 		expectBody   string
@@ -313,6 +361,53 @@ func TestSessionResponse(t *testing.T) {
 					CF:           "100",
 				},
 			},
+
+			expectCalls:  2,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"question": {
+					"subject":"John",
+					"dataType":"string",
+					"relationship":"lives in",
+					"type":"Second Form Object",
+					"plural":false,
+					"allowCF":true,
+					"allowUnknown":false,
+					"canAdd":true,
+					"prompt":"Where does John live?",
+					"knownAnswers":[]
+				}
+			}`,
+
+			expectQuestion: &Question{
+				AllowCF:      true,
+				AllowUnknown: false,
+				CanAdd:       true,
+				Concepts:     nil,
+				DataType:     "string",
+				KnownAnswers: []KnownAnswer{},
+				Plural:       false,
+				Prompt:       "Where does John live?",
+				Relationship: "lives in",
+				Subject:      "John",
+				Object:       "",
+				Type:         "Second Form Object",
+			},
+			expectAnswers: nil,
+			expectErr:     nil,
+		},
+		{
+			description: "Simple response that returns a question (alt engine)",
+			answers: []QAnswer{
+				{
+					Subject:      "John",
+					Relationship: "Speaks",
+					Object:       "English",
+					CF:           "100",
+				},
+			},
+			engine: stringPtr("alternate"),
 
 			expectCalls:  2,
 			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
@@ -410,6 +505,13 @@ func TestSessionResponse(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/response", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
+						if tc.engine != nil {
+							assert.Equal(
+								t,
+								"alternate",
+								r.Header.Get("x-rainbird-engine"),
+							)
+						}
 
 						body, err := ioutil.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -430,6 +532,9 @@ func TestSessionResponse(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
 
 			session, err := client.NewSession("kmid", "")
 			require.Nil(t, err)
@@ -444,8 +549,11 @@ func TestSessionResponse(t *testing.T) {
 }
 
 func TestSessionUndo(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
 		description string
+		engine      *string
 
 		responseCode int
 		responseBody string
@@ -456,6 +564,42 @@ func TestSessionUndo(t *testing.T) {
 	}{
 		{
 			description: "Success back to question",
+
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"question": {
+					"subject":"John",
+					"dataType":"string",
+					"relationship":"lives in",
+					"type":"Second Form Object",
+					"plural":false,
+					"allowCF":true,
+					"allowUnknown":false,
+					"canAdd":true,
+					"prompt":"Where does John live?",
+					"knownAnswers":[]
+				}
+			}`,
+			expectQuestion: &Question{
+				AllowCF:      true,
+				AllowUnknown: false,
+				CanAdd:       true,
+				Concepts:     nil,
+				DataType:     "string",
+				KnownAnswers: []KnownAnswer{},
+				Plural:       false,
+				Prompt:       "Where does John live?",
+				Relationship: "lives in",
+				Subject:      "John",
+				Object:       "",
+				Type:         "Second Form Object",
+			},
+			expectAnswers: nil,
+			expectErr:     nil,
+		},
+		{
+			description: "Success back to question (alt engine)",
+			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -530,6 +674,13 @@ func TestSessionUndo(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/undo", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
+						if tc.engine != nil {
+							assert.Equal(
+								t,
+								"alternate",
+								r.Header.Get("x-rainbird-engine"),
+							)
+						}
 
 						body, err := ioutil.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -549,6 +700,9 @@ func TestSessionUndo(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
+			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "")
