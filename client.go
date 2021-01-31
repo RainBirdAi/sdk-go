@@ -88,14 +88,12 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: Stream this rather than ReadAll
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf(
 			"API returned an error %d: %s",
 			resp.StatusCode,
@@ -107,7 +105,7 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 		Error string
 		ID    string `json:"id"`
 	}
-	err = json.Unmarshal(rawBody, &body)
+	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, err
 	}
@@ -142,6 +140,7 @@ func (c *Client) Version() (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err

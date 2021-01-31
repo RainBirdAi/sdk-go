@@ -41,7 +41,7 @@ var (
 
 // Inject adds facts to a running session
 func (s *Session) Inject(facts []InjectFact) error {
-	// TODO: Inject takes invalid JSON and doesn't match the API docs!
+	// NOTE: Inject takes invalid JSON and doesn't match the API docs!
 	payload, err := json.Marshal(&facts)
 	if err != nil {
 		return err
@@ -117,14 +117,13 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: Stream this rather than ReadAll
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		return nil, nil, fmt.Errorf(
 			"API returned error %d: %s",
 			resp.StatusCode,
@@ -137,7 +136,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 		Question *Question
 		Result   *[]Answer
 	}
-	err = json.Unmarshal(rawBody, &body)
+	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -179,14 +178,13 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: Stream this rather than ReadAll
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		return nil, nil, fmt.Errorf(
 			"API returned error %d: %s",
 			resp.StatusCode,
@@ -199,7 +197,7 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 		Question *Question
 		Result   *[]Answer
 	}
-	err = json.Unmarshal(rawBody, &body)
+	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -230,14 +228,13 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: Stream this rather than ReadAll
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		return nil, nil, fmt.Errorf(
 			"API returned error %d: %s",
 			resp.StatusCode,
@@ -250,7 +247,7 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 		Question *Question
 		Result   *[]Answer
 	}
-	err = json.Unmarshal(rawBody, &body)
+	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
