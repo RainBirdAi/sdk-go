@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func stringPtr(s string) *string { return &s }
-
 func TestClientNewSessionValidation(t *testing.T) {
 	testCases := []struct {
 		description string
@@ -58,6 +56,8 @@ func TestClientNewSessionValidation(t *testing.T) {
 }
 
 func TestClientNewSessionStartCalls(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
 		description string
 		apiKey      string
