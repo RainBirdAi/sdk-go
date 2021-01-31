@@ -14,9 +14,13 @@ import (
 )
 
 func TestSessionInject(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
-		description  string
-		facts        []InjectFact
+		description string
+		facts       []InjectFact
+		engine      *string
+
 		responseCode int
 		expectCalls  int64
 		expectBody   string
@@ -28,6 +32,36 @@ func TestSessionInject(t *testing.T) {
 			responseCode: http.StatusOK,
 			expectCalls:  2,
 			expectBody:   "[]",
+			expectErr:    nil,
+		},
+		{
+			description:  "Specific engine",
+			facts:        []InjectFact{},
+			engine:       stringPtr("alternate"),
+			responseCode: http.StatusOK,
+			expectCalls:  2,
+			expectBody:   "[]",
+			expectErr:    nil,
+		},
+		{
+			description: "Some facts",
+			facts: []InjectFact{
+				{
+					Subject:      "foo1",
+					Relationship: "bar1",
+					Object:       "baz1",
+					Certainty:    "121",
+				},
+				{
+					Subject:      "foo2",
+					Relationship: "bar2",
+					Object:       "baz2",
+					Certainty:    "122",
+				},
+			},
+			responseCode: http.StatusOK,
+			expectCalls:  2,
+			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121"},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122"}]`,
 			expectErr:    nil,
 		},
 		{
@@ -66,9 +100,20 @@ func TestSessionInject(t *testing.T) {
 						w.Write([]byte(`{"id":"success-id"}`))
 					case 2:
 						// Inject endpoint
-						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
+						assert.Equal(
+							t,
+							"application/json",
+							r.Header.Get("Content-Type"),
+						)
 						assert.Equal(t, "/success-id/inject", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
+						if tc.engine != nil {
+							assert.Equal(
+								t,
+								"alternate",
+								r.Header.Get("x-rainbird-engine"),
+							)
+						}
 
 						body, err := ioutil.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -76,7 +121,6 @@ func TestSessionInject(t *testing.T) {
 
 						w.Header().Add("Content-Type", "application/json")
 						w.WriteHeader(tc.responseCode)
-						w.Write([]byte(""))
 					default:
 						t.Fatal("Unexpected call")
 					}
@@ -88,6 +132,9 @@ func TestSessionInject(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
+			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "")
