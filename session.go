@@ -65,6 +65,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("API returned error %d", resp.StatusCode)
@@ -114,9 +115,7 @@ func (s *Session) Query(sub, rel, obj string) (*Question, *[]Answer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if resp.Body == nil {
-		return nil, nil, errors.New("Empty response body")
-	}
+	defer resp.Body.Close()
 
 	// TODO: Stream this rather than ReadAll
 	rawBody, err := ioutil.ReadAll(resp.Body)
@@ -178,9 +177,7 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if resp.Body == nil {
-		return nil, nil, errors.New("Empty response body")
-	}
+	defer resp.Body.Close()
 
 	// TODO: Stream this rather than ReadAll
 	rawBody, err := ioutil.ReadAll(resp.Body)
@@ -231,6 +228,7 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	defer resp.Body.Close()
 
 	// TODO: Stream this rather than ReadAll
 	rawBody, err := ioutil.ReadAll(resp.Body)

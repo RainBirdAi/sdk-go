@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func stringPtr(s string) *string { return &s }
+
 func TestClientNewSessionValidation(t *testing.T) {
 	testCases := []struct {
 		description string
@@ -64,7 +66,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 		contextID   string
 
 		expectCallURI string
-		returnBody    string
+		returnBody    *string
 		returnCode    int
 
 		expectCalls int
@@ -88,7 +90,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			kmid:        "12345678-1234-1234-1234567890ab",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
-			returnBody:    `{"id":"success-id"}`,
+			returnBody:    stringPtr(`{"id":"success-id"}`),
 			returnCode:    http.StatusOK,
 
 			expectCalls: 1,
@@ -103,7 +105,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			contextID:   "foo",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab?contextid=foo",
-			returnBody:    `{"id":"success-id"}`,
+			returnBody:    stringPtr(`{"id":"success-id"}`),
 			returnCode:    http.StatusOK,
 
 			expectCalls: 1,
@@ -117,12 +119,26 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			kmid:        "12345678-1234-1234-1234567890ab",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
-			returnBody:    `Bad request!`,
+			returnBody:    stringPtr(`Bad request!`),
 			returnCode:    http.StatusBadRequest,
 
 			expectCalls: 1,
 			expectID:    "",
 			expectErr:   errors.New("API returned an error 400: Bad request!"),
+		},
+		{
+			description: "Handle good code but no ID",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    stringPtr(`{}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned no error but no ID either"),
 		},
 		// TODO: Engine header
 	}
@@ -145,7 +161,10 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 
 					w.Header().Add("Content-Type", "application/json")
 					w.WriteHeader(tc.returnCode)
-					w.Write([]byte(tc.returnBody))
+
+					if tc.returnBody != nil {
+						w.Write([]byte(*tc.returnBody))
+					}
 				}),
 			)
 			defer srv.Close()

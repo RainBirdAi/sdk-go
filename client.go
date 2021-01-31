@@ -86,9 +86,7 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.Body == nil {
-		return nil, errors.New("Empty response body")
-	}
+	defer resp.Body.Close()
 
 	// TODO: Stream this rather than ReadAll
 	rawBody, err := ioutil.ReadAll(resp.Body)
@@ -143,6 +141,7 @@ func (c *Client) Version() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		// TODO: This should mean we have an error message but not the case
 		return "", fmt.Errorf("API returned an error code")
