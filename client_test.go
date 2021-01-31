@@ -64,6 +64,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 		keyEncoded  string
 		kmid        string
 		contextID   string
+		engine      *string
 
 		expectCallURI string
 		returnBody    *string
@@ -140,7 +141,21 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			expectID:    "",
 			expectErr:   errors.New("API returned no error but no ID either"),
 		},
-		// TODO: Engine header
+		{
+			description: "Specific engine",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			engine:      stringPtr("alternateengine"),
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    stringPtr(`{}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned no error but no ID either"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -157,7 +172,13 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 					assert.Equal(t, http.MethodGet, r.Method)
 					assert.Equal(t, r.Header.Get("Authorization"), tc.keyEncoded)
 					assert.Equal(t, r.Header.Get("Accept"), "application/json")
-					// TODO: Engine
+					if tc.engine != nil {
+						assert.Equal(
+							t,
+							*tc.engine,
+							r.Header.Get("x-rainbird-engine"),
+						)
+					}
 
 					w.Header().Add("Content-Type", "application/json")
 					w.WriteHeader(tc.returnCode)
@@ -173,6 +194,9 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 				APIKey:         tc.apiKey,
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
+			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
 			}
 
 			result, err := client.NewSession(tc.kmid, tc.contextID)
