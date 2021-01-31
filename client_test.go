@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -109,6 +110,20 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			expectID:    "success-id",
 			expectErr:   nil,
 		},
+		{
+			description: "Handle 400",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    `Bad request!`,
+			returnCode:    http.StatusBadRequest,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned an error: Bad request!"),
+		},
 		// TODO: Engine header
 	}
 
@@ -129,8 +144,8 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 					// TODO: Engine
 
 					w.Header().Add("Content-Type", "application/json")
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(`{"id":"success-id"}`))
+					w.WriteHeader(tc.returnCode)
+					w.Write([]byte(tc.returnBody))
 				}),
 			)
 			defer srv.Close()
