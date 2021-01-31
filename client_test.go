@@ -122,7 +122,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 
 			expectCalls: 1,
 			expectID:    "",
-			expectErr:   errors.New("API returned an error: Bad request!"),
+			expectErr:   errors.New("API returned an error 400: Bad request!"),
 		},
 		// TODO: Engine header
 	}

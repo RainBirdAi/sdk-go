@@ -98,7 +98,11 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 
 	// TODO: The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+		return nil, fmt.Errorf(
+			"API returned an error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
 	}
 
 	var body struct {
