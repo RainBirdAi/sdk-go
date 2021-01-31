@@ -120,12 +120,12 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			kmid:        "12345678-1234-1234-1234567890ab",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
-			returnBody:    stringPtr(`Bad request!`),
+			returnBody:    stringPtr(`Bad request`),
 			returnCode:    http.StatusBadRequest,
 
 			expectCalls: 1,
 			expectID:    "",
-			expectErr:   errors.New("API returned an error 400: Bad request!"),
+			expectErr:   errors.New("API returned an error 400: Bad request"),
 		},
 		{
 			description: "Handle good code but no ID",
@@ -275,11 +275,11 @@ func TestClientVersion(t *testing.T) {
 
 			expectURI:    "/version",
 			responseCode: http.StatusInternalServerError,
-			responseBody: "Internal server error!",
+			responseBody: "Foobarbaz",
 
 			expectCalls: 1,
 			expectRet:   "",
-			expectErr:   errors.New("API returned error code 500: Internal server error!"),
+			expectErr:   errors.New("API returned error code 500: Foobarbaz"),
 		},
 	}
 
