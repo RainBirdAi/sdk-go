@@ -246,6 +246,17 @@ func TestClientVersion(t *testing.T) {
 			expectRet:   "2.3.4",
 			expectErr:   nil,
 		},
+		{
+			description: "Error code",
+
+			expectURI:    "/version",
+			responseCode: http.StatusInternalServerError,
+			responseBody: "Internal server error!",
+
+			expectCalls: 1,
+			expectRet:   "",
+			expectErr:   errors.New("API returned error code 500: Internal server error!"),
+		},
 	}
 
 	for _, tc := range testCases {

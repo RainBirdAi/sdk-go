@@ -142,14 +142,18 @@ func (c *Client) Version() (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 400 {
-		// TODO: This should mean we have an error message but not the case
-		return "", fmt.Errorf("API returned an error code")
-	}
-
-	apiVersion, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-	return string(apiVersion), err
+
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf(
+			"API returned error code %d: %s",
+			resp.StatusCode,
+			body,
+		)
+	}
+
+	return string(body), err
 }
