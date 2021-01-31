@@ -94,6 +94,21 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			expectID:    "success-id",
 			expectErr:   nil,
 		},
+		{
+			description: "Correctly request context",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			contextID:   "foo",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab?contextid=foo",
+			returnBody:    `{"id":"success-id"}`,
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "success-id",
+			expectErr:   nil,
+		},
 		// TODO: Engine header
 	}
 
