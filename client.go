@@ -86,26 +86,26 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.Body == nil {
-		return nil, errors.New("Empty response body")
-	}
+	defer resp.Body.Close()
 
-	// TODO: Stream this rather than ReadAll
-	rawBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API returned an error: %s", string(rawBody))
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned an error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
 	}
 
 	var body struct {
 		Error string
 		ID    string `json:"id"`
 	}
-	err = json.Unmarshal(rawBody, &body)
+	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, err
 	}
@@ -139,14 +139,20 @@ func (c *Client) Version() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if resp.StatusCode >= 400 {
-		// TODO: This should mean we have an error message but not the case
-		return "", fmt.Errorf("API returned an error code")
-	}
+	defer resp.Body.Close()
 
-	apiVersion, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-	return string(apiVersion), err
+
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf(
+			"API returned error code %d: %s",
+			resp.StatusCode,
+			body,
+		)
+	}
+
+	return string(body), err
 }

@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -55,15 +56,18 @@ func TestClientNewSessionValidation(t *testing.T) {
 }
 
 func TestClientNewSessionStartCalls(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+
 	testCases := []struct {
 		description string
 		apiKey      string
 		keyEncoded  string
 		kmid        string
 		contextID   string
+		engine      *string
 
 		expectCallURI string
-		returnBody    string
+		returnBody    *string
 		returnCode    int
 
 		expectCalls int
@@ -87,14 +91,71 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			kmid:        "12345678-1234-1234-1234567890ab",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
-			returnBody:    `{"id":"success-id"}`,
+			returnBody:    stringPtr(`{"id":"success-id"}`),
 			returnCode:    http.StatusOK,
 
 			expectCalls: 1,
 			expectID:    "success-id",
 			expectErr:   nil,
 		},
-		// TODO: Engine header
+		{
+			description: "Correctly request context",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			contextID:   "foo",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab?contextid=foo",
+			returnBody:    stringPtr(`{"id":"success-id"}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "success-id",
+			expectErr:   nil,
+		},
+		{
+			description: "Handle 400",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    stringPtr(`Bad request`),
+			returnCode:    http.StatusBadRequest,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned an error 400: Bad request"),
+		},
+		{
+			description: "Handle good code but no ID",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    stringPtr(`{}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned no error but no ID either"),
+		},
+		{
+			description: "Specific engine",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			engine:      stringPtr("alternateengine"),
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
+			returnBody:    stringPtr(`{}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "",
+			expectErr:   errors.New("API returned no error but no ID either"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -111,11 +172,20 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 					assert.Equal(t, http.MethodGet, r.Method)
 					assert.Equal(t, r.Header.Get("Authorization"), tc.keyEncoded)
 					assert.Equal(t, r.Header.Get("Accept"), "application/json")
-					// TODO: Engine
+					if tc.engine != nil {
+						assert.Equal(
+							t,
+							*tc.engine,
+							r.Header.Get("x-rainbird-engine"),
+						)
+					}
 
 					w.Header().Add("Content-Type", "application/json")
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(`{"id":"success-id"}`))
+					w.WriteHeader(tc.returnCode)
+
+					if tc.returnBody != nil {
+						w.Write([]byte(*tc.returnBody))
+					}
 				}),
 			)
 			defer srv.Close()
@@ -124,6 +194,9 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 				APIKey:         tc.apiKey,
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
+			}
+			if tc.engine != nil {
+				client.Engine = *tc.engine
 			}
 
 			result, err := client.NewSession(tc.kmid, tc.contextID)
@@ -196,6 +269,17 @@ func TestClientVersion(t *testing.T) {
 			expectCalls: 1,
 			expectRet:   "2.3.4",
 			expectErr:   nil,
+		},
+		{
+			description: "Error code",
+
+			expectURI:    "/version",
+			responseCode: http.StatusInternalServerError,
+			responseBody: "Foobarbaz",
+
+			expectCalls: 1,
+			expectRet:   "",
+			expectErr:   errors.New("API returned error code 500: Foobarbaz"),
 		},
 	}
 
