@@ -14,9 +14,11 @@ type Answer struct {
 	FactID          string
 	Object          interface{}
 	ObjectMetadata  map[string][]MetaData
+	ObjectValue     interface{}
 	Relationship    string
 	Subject         string
 	SubjectMetadata map[string][]MetaData
+	SubjectValue    interface{}
 }
 
 // KnownAnswer is a hint provided by the engine for information it already knows
