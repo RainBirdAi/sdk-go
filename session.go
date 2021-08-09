@@ -31,6 +31,7 @@ type QAnswer struct {
 	Relationship string `json:"relationship"`
 	Object       string `json:"object"`
 	CF           string `json:"cf"`
+	Answer       string `json:"answer,omitempty"`
 }
 
 var (
