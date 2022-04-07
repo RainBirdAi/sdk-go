@@ -26,6 +26,8 @@ func usage() {
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
 	fmt.Println("    - Report CLI and API versions")
+	fmt.Printf("  %s interactions <session> <interactionKey>\n", os.Args[0])
+	fmt.Println("    - Get the interaction log for a session")
 	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
@@ -109,6 +111,12 @@ func main() {
 			os.Exit(0)
 		}
 		cmdVersion()
+	case "interactions":
+		if len(os.Args) != 4 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdInteractionsLog(os.Args[2], &os.Args[3])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -257,4 +265,58 @@ func cmdVersion() {
 		return
 	}
 	fmt.Printf("API: %s\n", api)
+}
+
+func cmdInteractionsLog(sessionID string, interactionKey *string) error {
+	session, err := client.ResumeSession(sessionID)
+	if err != nil {
+		return err
+	}
+
+	interactions, err := session.Interactions(interactionKey)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("INTERACTIONS:")
+	for _, i := range interactions {
+		event := i.Event
+		fmt.Printf("Event: %s\n", event)
+		fmt.Printf("Created: %s\n", i.Created)
+		switch event {
+		case sdk.StartEvent:
+			start := i.Data.(sdk.Start)
+			fmt.Printf("Start: %s\n\n", &start)
+		case sdk.QuestionEvent:
+			questions := i.Data.([]sdk.Question)
+			for _, q := range questions {
+				fmt.Printf("Questions: %s\n\n", &q)
+			}
+		case sdk.AnswerEvent:
+			answers := i.Data.([]sdk.QAnswer)
+			for _, a := range answers {
+				fmt.Printf("Answer: %s\n\n", &a)
+			}
+		case sdk.QueryEvent:
+			query := i.Data.(sdk.Query)
+			fmt.Printf("Query: %s\n\n", &query)
+		case sdk.InjectEvent:
+			facts := i.Data.([]sdk.InjectFact)
+			for _, f := range facts {
+				fmt.Printf("Inject: %s\n\n", &f)
+			}
+		case sdk.DatasourceEvent:
+			datasources := i.Data.([]sdk.Datasource)
+			for _, d := range datasources {
+				fmt.Printf("Datasource: %s\n\n", &d)
+			}
+		case sdk.ResultEvent:
+			results := i.Data.([]sdk.Answer)
+			for _, r := range results {
+				fmt.Printf("Result: %s\n\n", &r)
+			}
+		}
+	}
+	fmt.Println("")
+	return nil
 }

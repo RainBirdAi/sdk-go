@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -23,7 +24,30 @@ type InjectFact struct {
 	Relationship string `json:"relationship"`
 	Object       string `json:"object"`
 	Certainty    string `json:"cf"`
+	CertFactor   *int   `json:"certainty,omitempty"`
 }
+
+// CertaintyFactor is a common interface to handle both cf and certainty from responses
+func (i *InjectFact) CertaintyFactor() int {
+	if i.CertFactor != nil {
+		return *i.CertFactor
+	}
+	toInt, _ := strconv.Atoi(i.Certainty)
+	return toInt
+}
+
+// String makes *InjectFact satisfy fmt.Stringer
+func (i *InjectFact) String() string {
+	return fmt.Sprintf(
+		"%s - %s - %s",
+		i.Subject,
+		i.Relationship,
+		i.Object,
+	)
+}
+
+// Satisfy interfaces
+var _ fmt.Stringer = (*InjectFact)(nil)
 
 // QAnswer is a user's answer to an Question from the engine
 type QAnswer struct {
@@ -31,8 +55,32 @@ type QAnswer struct {
 	Relationship string `json:"relationship"`
 	Object       string `json:"object"`
 	CF           string `json:"cf"`
+	Certainty    *int   `json:"certainty,omitempty"`
 	Answer       string `json:"answer,omitempty"`
 }
+
+// CertaintyFactor is a common interface to handle both cf and certainty from responses
+func (q *QAnswer) CertaintyFactor() int {
+	if q.Certainty != nil {
+		return *q.Certainty
+	}
+	toInt, _ := strconv.Atoi(q.CF)
+	return toInt
+}
+
+// String makes *QAnswer satisfy fmt.Stringer
+func (q *QAnswer) String() string {
+	return fmt.Sprintf(
+		"%s - %s - %v [%3d%%]",
+		q.Subject,
+		q.Relationship,
+		q.Object,
+		q.CertaintyFactor(),
+	)
+}
+
+// Satisfy interfaces
+var _ fmt.Stringer = (*QAnswer)(nil)
 
 var (
 	// ErrQueryBlankRelationship is given when relationship is "" in a query
@@ -254,4 +302,52 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	}
 
 	return body.Question, body.Result, nil
+}
+
+// Interactions returns an array of time-stamped session events
+func (s *Session) Interactions(interactionKey *string) ([]InteractionEvent, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		s.client.EnvironmentURL+"/analysis/interactions/"+s.ID,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if interactionKey != nil {
+		req.Header.Set("x-interaction-key", *interactionKey)
+	}
+
+	resp, err := s.client.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var response []InteractionResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	interactions, err := InteractionEvents(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
 }
