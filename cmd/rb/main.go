@@ -223,7 +223,7 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 
 func cmdStart(kmID string, contextID string) error {
 	if client.APIKey == "" {
-		return errors.New("Missing required environment variable RB_API_KEY")
+		return errors.New("missing required environment variable RB_API_KEY")
 	}
 
 	session, err := client.NewSession(kmID, contextID)
