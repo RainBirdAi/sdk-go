@@ -21,8 +21,8 @@ unit:
 lint:
   stage: test
   script:
-  - go install golang.org/x/lint/golint@latest
-  - golint -set_exit_status ./...
+  - go install honnef.co/go/tools/cmd/staticcheck@latest
+  - staticcheck ./...
 
 benchmark:
   stage: test
