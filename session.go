@@ -85,7 +85,7 @@ var _ fmt.Stringer = (*QAnswer)(nil)
 var (
 	// ErrQueryBlankRelationship is given when relationship is "" in a query
 	// A relationship must always be provided.
-	ErrQueryBlankRelationship = errors.New("Blank Relationship")
+	ErrQueryBlankRelationship = errors.New("blank relationship")
 )
 
 // Inject adds facts to a running session
