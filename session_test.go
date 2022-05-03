@@ -1118,3 +1118,71 @@ func TestInteractionLog(t *testing.T) {
 		})
 	}
 }
+
+func TestEvidence(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+	sessionID := "1234"
+	factID := "WA:RF:1234"
+
+	testCases := []struct {
+		description    string
+		kmid           string
+		engine         *string
+		responseBody   *string
+		responseCode   int
+		expectEvidence *Evidence
+		expectErr      error
+	}{
+		{
+			description:    "Bad request",
+			responseCode:   http.StatusBadRequest,
+			responseBody:   stringPtr("Foo bar baz"),
+			expectEvidence: nil,
+			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description:    "Internal server error",
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   stringPtr("Foo bar baz"),
+			expectEvidence: nil,
+			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // Capture
+		t.Run(tc.description, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/analysis/evidence/"+factID+"/"+sessionID, r.RequestURI)
+
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(tc.responseCode)
+					w.Write([]byte(*tc.responseBody))
+				}),
+			)
+			defer srv.Close()
+
+			client := &Client{
+				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
+				EnvironmentURL: srv.URL,
+				HTTPClient:     srv.Client(),
+			}
+
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
+
+			session, err := client.ResumeSession(sessionID)
+			require.Nil(t, err)
+
+			evidence, err := session.Evidence(nil, factID)
+			assert.Equal(t, tc.expectErr, err)
+			assert.Equal(t, tc.expectEvidence, evidence)
+		})
+	}
+
+}
