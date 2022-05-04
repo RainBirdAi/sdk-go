@@ -1179,7 +1179,7 @@ func TestEvidence(t *testing.T) {
 			session, err := client.ResumeSession(sessionID)
 			require.Nil(t, err)
 
-			evidence, err := session.Evidence(nil, factID)
+			evidence, err := session.Evidence(factID, nil)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectEvidence, evidence)
 		})

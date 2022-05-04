@@ -353,7 +353,7 @@ func (s *Session) Interactions(interactionKey *string) ([]InteractionEvent, erro
 }
 
 // Evidence returns
-func (s *Session) Evidence(evidenceKey *string, factID string) (*Evidence, error) {
+func (s *Session) Evidence(factID string, evidenceKey *string) (*Evidence, error) {
 	req, err := http.NewRequest(
 		http.MethodGet,
 		s.client.EnvironmentURL+"/analysis/evidence/"+factID+"/"+s.ID,
