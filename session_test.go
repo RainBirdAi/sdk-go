@@ -1148,7 +1148,7 @@ func TestEvidence(t *testing.T) {
 			expectErr:      errors.New("API returned error 500: Foo bar baz"),
 		},
 		{
-			description:  "Returns correct evidence for speaks",
+			description:  "Returns correct evidence for rule",
 			responseCode: http.StatusOK,
 			responseBody: stringPtr(`{
 				"factID": "WA:RF:1234",
@@ -1225,7 +1225,7 @@ func TestEvidence(t *testing.T) {
 					},
 					Certainty: 100,
 				},
-				Rule: Rule{
+				Rule: &Rule{
 					Bindings: map[string]string{
 						"S":       "Dan",
 						"O":       "English",
@@ -1261,6 +1261,54 @@ func TestEvidence(t *testing.T) {
 						},
 					},
 				},
+				Time: 123456789,
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Returns correct evidence for datasource",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`{
+				"factID": "WA:DF:1234",
+				"source": "datasource",
+				"fact": {
+					"subject": {
+						"type": "location",
+						"value": "London",
+						"dataType": "string"
+					},
+					"relationship": {
+						"type": "has temperature"
+					},
+					"object": {
+						"type": "temperature",
+						"value": "290.00",
+						"dataType": "string"
+					},
+					"certainty": 100
+				},
+				"time": 123456789
+			}`),
+			expectEvidence: &Evidence{
+				FactID: "WA:DF:1234",
+				Source: "datasource",
+				Fact: Fact{
+					Subject: ConceptInstance{
+						Type:     "location",
+						Value:    "London",
+						DataType: "string",
+					},
+					Relationship: Relationship{
+						Type: "has temperature",
+					},
+					Object: ConceptInstance{
+						Type:     "temperature",
+						Value:    "290.00",
+						DataType: "string",
+					},
+					Certainty: 100,
+				},
+				Rule: nil,
 				Time: 123456789,
 			},
 			expectErr: nil,

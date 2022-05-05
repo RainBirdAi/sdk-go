@@ -16,11 +16,11 @@ const (
 
 // EvidenceResponse is the raw response from the api
 type EvidenceResponse struct {
-	FactID       string       `json:"factId,omitempty"`
-	Source       string       `json:"source,omitempty"`
-	Fact         Fact         `json:"fact,omitempty"`
-	RuleResponse ruleResponse `json:"rule,omitempty"`
-	Time         int          `json:"time,omitempty"`
+	FactID       string        `json:"factId,omitempty"`
+	Source       string        `json:"source,omitempty"`
+	Fact         Fact          `json:"fact,omitempty"`
+	RuleResponse *ruleResponse `json:"rule,omitempty"`
+	Time         int           `json:"time,omitempty"`
 }
 
 // Evidence is produced from the raw EvidenceResponse
@@ -28,7 +28,7 @@ type Evidence struct {
 	FactID string `json:"factId,omitempty"`
 	Source string `json:"source,omitempty"`
 	Fact   Fact   `json:"fact,omitempty"`
-	Rule   Rule   `json:"rule,omitempty"`
+	Rule   *Rule  `json:"rule,omitempty"`
 	Time   int    `json:"time,omitempty"`
 }
 
@@ -46,9 +46,13 @@ var _ fmt.Stringer = (*Evidence)(nil)
 
 // AsEvidence converts EvidenceResponse to Evidence
 func AsEvidence(response EvidenceResponse) (Evidence, error) {
-	rule, err := asRule(response.RuleResponse)
-	if err != nil {
-		return Evidence{}, err
+	var rule *Rule
+	if response.RuleResponse != nil {
+		r, err := asRule(*response.RuleResponse)
+		if err != nil {
+			return Evidence{}, err
+		}
+		rule = r
 	}
 
 	return Evidence{
@@ -110,13 +114,13 @@ type Rule struct {
 	Conditions []Conditioner
 }
 
-func asRule(response ruleResponse) (Rule, error) {
+func asRule(response ruleResponse) (*Rule, error) {
 	conditions, err := asConditions(response.Conditions)
 	if err != nil {
-		return Rule{}, err
+		return nil, err
 	}
 
-	return Rule{
+	return &Rule{
 		Bindings:   response.Bindings,
 		Conditions: conditions,
 	}, nil
