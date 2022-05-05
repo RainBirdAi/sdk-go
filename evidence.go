@@ -1,13 +1,33 @@
 package sdk
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
+type ConditionType = int
+
+const (
+	RelationshipType ConditionType = iota
+	ExpressionType
+)
+
+// EvidenceResponse is the raw response from the api
+type EvidenceResponse struct {
+	FactID       string       `json:"factId,omitempty"`
+	Source       string       `json:"source,omitempty"`
+	Fact         Fact         `json:"fact,omitempty"`
+	RuleResponse ruleResponse `json:"rule,omitempty"`
+	Time         int          `json:"time,omitempty"`
+}
+
+// Evidence is an abstraction upon EvidenceResponse
 type Evidence struct {
-	FactID string
-	Source string
-	Fact   Fact
-	Rule   Rule
-	Time   int
+	FactID string `json:"factId,omitempty"`
+	Source string `json:"source,omitempty"`
+	Fact   Fact   `json:"fact,omitempty"`
+	Rule   Rule   `json:"rule,omitempty"`
+	Time   int    `json:"time,omitempty"`
 }
 
 // String makes *Answer satisfy fmt.Stringer
@@ -15,105 +35,144 @@ func (e *Evidence) String() string {
 	return fmt.Sprintf("%s", e.Fact.Subject)
 }
 
-type Fact struct {
-	Subject      ConceptInstance
-	Relationship Relationship
-	Object       ConceptInstance
-	Certainty    int
+func AsEvidence(response EvidenceResponse) (Evidence, error) {
+	rule, err := asRule(response.RuleResponse)
+	if err != nil {
+		return Evidence{}, err
+	}
+
+	return Evidence{
+		FactID: response.FactID,
+		Source: response.Source,
+		Fact:   response.Fact,
+		Rule:   rule,
+		Time:   response.Time,
+	}, nil
 }
+
+type Fact struct {
+	Subject      ConceptInstance `json:"subject,omitempty"`
+	Relationship Relationship    `json:"relationship,omitempty"`
+	Object       ConceptInstance `json:"object,omitempty"`
+	Certainty    int             `json:"certainty,omitempty"`
+}
+
 type Relationship struct {
-	Type string
+	Type string `json:"type,omitempty"`
 }
 
 type ConceptInstance struct {
-	Type     string
-	Value    interface{}
-	dataType string
+	Type     string      `json:"type,omitempty"`
+	Value    interface{} `json:"value,omitempty"`
+	DataType string      `json:"dataType,omitempty"`
 }
 
+type ruleResponse struct {
+	Bindings   map[string]string `json:"bindings,omitempty"`
+	Conditions []rawCondition    `json:"conditions,omitempty"`
+}
+
+// Rule is an abstraction of RuleReponse
 type Rule struct {
-	Bindings struct {
-		conditions []Condition
+	Bindings   map[string]string
+	Conditions []Condition
+}
+
+func asRule(response ruleResponse) (Rule, error) {
+	conditions, err := asConditions(response.Conditions)
+	if err != nil {
+		return Rule{}, err
 	}
+
+	return Rule{
+		Bindings:   response.Bindings,
+		Conditions: conditions,
+	}, nil
 }
 
 type Condition interface {
+	Type() ConditionType
 	Salience() int
 }
 
-type ConditionRelationship struct {
-	Certainty    int
-	FactID       string
-	FactKey      *string
-	Object       string
-	ObjectType   string
-	Relationship string
-	Subject      string
-	salience     int
+func asConditions(raw []rawCondition) ([]Condition, error) {
+	var conditions []Condition
+	for _, c := range raw {
+		if c.Relationship != "" {
+			rel := ConditionRelationship{
+				Certainty:    c.Certainty,
+				FactID:       c.FactID,
+				FactKey:      c.FactKey,
+				Object:       c.Object,
+				ObjectType:   c.ObjectType,
+				Relationship: c.Relationship,
+				Subject:      c.Subject,
+				salience:     c.Salience,
+			}
+			conditions = append(conditions, rel)
+		} else if c.Expression.Text != "" {
+			exp := ConditionExpression{
+				WasMet:     c.WasMet,
+				Expression: c.Expression,
+				salience:   c.Salience,
+			}
+			conditions = append(conditions, exp)
+		} else {
+			return conditions, errors.New("unsupported condition type")
+		}
+	}
+	return conditions, nil
 }
 
-func (cr *ConditionRelationship) Salience() int {
+// rawCondition encapsulates any kind of condition that can be present.
+type rawCondition struct {
+	Certainty    int         `json:"certainty,omitempty"`
+	FactID       string      `json:"factID,omitempty"`
+	FactKey      *string     `json:"factKey,omitempty"`
+	Object       interface{} `json:"object,omitempty"`
+	ObjectType   string      `json:"objectType,omitempty"`
+	Relationship string      `json:"relationship,omitempty"`
+	Subject      interface{} `json:"subject,omitempty"`
+	Salience     int         `json:"salience,omitempty"`
+	WasMet       bool        `json:"wasMet,omitempty"`
+	Expression   struct {
+		Text string `json:"text,omitempty"`
+	} `json:"expression,omitempty"`
+}
+
+type ConditionRelationship struct {
+	Certainty    int         `json:"certainty,omitempty"`
+	FactID       string      `json:"factID,omitempty"`
+	FactKey      *string     `json:"factKey,omitempty"`
+	Object       interface{} `json:"object,omitempty"`
+	ObjectType   string      `json:"objectType,omitempty"`
+	Relationship string      `json:"relationship,omitempty"`
+	Subject      interface{} `json:"subject,omitempty"`
+	salience     int         `json:"salience,omitempty"`
+}
+
+func (cr ConditionRelationship) Type() ConditionType {
+	return RelationshipType
+}
+
+func (cr ConditionRelationship) Salience() int {
 	return cr.salience
 }
 
 type ConditionExpression struct {
-	WasMet     bool
-	Expression struct {
-		Text string
-	}
-	salience int
+	WasMet     bool       `json:"wasMet,omitempty"`
+	Expression Expression `json:"expression,omitempty"`
+	salience   int        `json:"salience,omitempty"`
 }
 
-func (ce *ConditionExpression) Salience() int {
+type Expression struct {
+	Text string `json:"text,omitempty"`
+}
+
+func (cr ConditionExpression) Type() ConditionType {
+	return ExpressionType
+}
+
+func (ce ConditionExpression) Salience() int {
 	return ce.salience
 }
-
-// `{
-//     "factID": "WA:RF:66812f77defed9cb592da054e89c498d717019dafe3daadd9e0afdd4b2c999b0",
-//     "source": "rule",
-//     "fact": {
-//         "subject": {
-//             "type": "Person",
-//             "value": "Lucy",
-//             "dataType": "string"
-//         },
-//         "relationship": {
-//             "type": "might speak"
-//         },
-//         "object": {
-//             "type": "Language",
-//             "value": "English",
-//             "dataType": "string"
-//         },
-//         "certainty": 100
-//     },
-//     "time": 1651662791288,
-//     "rule": {
-//         "bindings": {
-//             "S": "Lucy",
-//             "O": "English",
-//             "COUNTRY": "England"
-//         },
-//         "conditions": [
-//             {
-//                 "subject": "Lucy",
-//                 "relationship": "lives in",
-//                 "object": "England",
-//                 "salience": 100,
-//                 "certainty": 100,
-//                 "factID": "WA:AF:e0d46da0883aa26a782a60adb2d97714c2294b996ebc73d14100a005def815bb",
-//                 "objectType": "string",
-//                 "factKey": "30d74cc5-7eb6-4c88-8e12-4897b47e3ee7"
-//             },
-//             {
-//                 "subject": "England",
-//                 "relationship": "has national language",
-//                 "object": "English",
-//                 "salience": 100,
-//                 "certainty": 100,
-//                 "factID": "WA:KF:bda2ac8b66ff2b24e91b0d9e162037cbd05b62094a9461fe504d2ce50e1d691e",
-//                 "objectType": "string"
-//             }
-//         ]
-//     }
-// }`

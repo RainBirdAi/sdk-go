@@ -120,11 +120,11 @@ func main() {
 		}
 		err = cmdInteractionsLog(os.Args[2], &os.Args[3])
 	case "evidence":
-		if len(os.Args) != 3 {
+		if len(os.Args) != 5 {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdEvidence(os.Args[2])
+		err = cmdEvidence(os.Args[2], os.Args[3], &os.Args[4])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")

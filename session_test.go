@@ -1147,6 +1147,124 @@ func TestEvidence(t *testing.T) {
 			expectEvidence: nil,
 			expectErr:      errors.New("API returned error 500: Foo bar baz"),
 		},
+		{
+			description:  "Returns correct evidence for speaks",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`{
+				"factID": "WA:RF:1234",
+				"source": "rule",
+				"fact": {
+					"subject": {
+						"type": "Person",
+						"value": "Lucy",
+						"dataType": "string"
+					},
+					"relationship": {
+						"type": "might speak"
+					},
+					"object": {
+						"type": "Language",
+						"value": "English",
+						"dataType": "string"
+					},
+					"certainty": 100
+				},
+				"time": 123456789,
+				"rule": {
+					"bindings": {
+						"S": "Lucy",
+						"O": "English",
+						"COUNTRY": "England"
+					},
+					"conditions": [
+						{
+							"subject": "Lucy",
+							"relationship": "lives in",
+							"object": "England",
+							"salience": 100,
+							"certainty": 100,
+							"factID": "WA:RF:1234",
+							"objectType": "string",
+							"factKey": "30d74cc5-7eb6-4c88-8e12-4897b47e3ee7"
+						},
+						{
+							"subject": "England",
+							"relationship": "has national language",
+							"object": "English",
+							"salience": 100,
+							"certainty": 100,
+							"factID": "WA:RF:1234",
+							"objectType": "string"
+						},
+						{
+							"wasMet": true,
+							"salience": 100,
+							"expression": {
+								"text": "1 gte 0"
+							}
+						}
+					]
+				}
+			}`),
+			expectEvidence: &Evidence{
+				FactID: factID,
+				Source: "rule",
+				Fact: Fact{
+					Subject: ConceptInstance{
+						Type:     "Person",
+						Value:    "Lucy",
+						DataType: "string",
+					},
+					Relationship: Relationship{
+						Type: "might speak",
+					},
+					Object: ConceptInstance{
+						Type:     "Language",
+						Value:    "English",
+						DataType: "string",
+					},
+					Certainty: 100,
+				},
+				Rule: Rule{
+					Bindings: map[string]string{
+						"S":       "Lucy",
+						"O":       "English",
+						"COUNTRY": "England",
+					},
+					Conditions: []Condition{
+						ConditionRelationship{
+							Subject:      "Lucy",
+							Relationship: "lives in",
+							Certainty:    100,
+							Object:       "England",
+							salience:     100,
+							FactID:       factID,
+							ObjectType:   "string",
+							FactKey:      stringPtr("30d74cc5-7eb6-4c88-8e12-4897b47e3ee7"),
+						},
+						ConditionRelationship{
+							Subject:      "England",
+							Relationship: "has national language",
+							Certainty:    100,
+							Object:       "English",
+							salience:     100,
+							FactID:       factID,
+							ObjectType:   "string",
+							FactKey:      nil,
+						},
+						ConditionExpression{
+							WasMet:   true,
+							salience: 100,
+							Expression: Expression{
+								Text: "1 gte 0",
+							},
+						},
+					},
+				},
+				Time: 123456789,
+			},
+			expectErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
