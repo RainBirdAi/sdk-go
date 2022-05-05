@@ -352,7 +352,7 @@ func (s *Session) Interactions(interactionKey *string) ([]InteractionEvent, erro
 	return interactions, nil
 }
 
-// Evidence returns
+// Evidence returns Evidence for a given factID
 func (s *Session) Evidence(factID string, evidenceKey *string) (*Evidence, error) {
 	req, err := http.NewRequest(
 		http.MethodGet,

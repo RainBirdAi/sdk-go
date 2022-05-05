@@ -1156,7 +1156,7 @@ func TestEvidence(t *testing.T) {
 				"fact": {
 					"subject": {
 						"type": "Person",
-						"value": "Lucy",
+						"value": "Dan",
 						"dataType": "string"
 					},
 					"relationship": {
@@ -1172,13 +1172,13 @@ func TestEvidence(t *testing.T) {
 				"time": 123456789,
 				"rule": {
 					"bindings": {
-						"S": "Lucy",
+						"S": "Dan",
 						"O": "English",
 						"COUNTRY": "England"
 					},
 					"conditions": [
 						{
-							"subject": "Lucy",
+							"subject": "Dan",
 							"relationship": "lives in",
 							"object": "England",
 							"salience": 100,
@@ -1212,7 +1212,7 @@ func TestEvidence(t *testing.T) {
 				Fact: Fact{
 					Subject: ConceptInstance{
 						Type:     "Person",
-						Value:    "Lucy",
+						Value:    "Dan",
 						DataType: "string",
 					},
 					Relationship: Relationship{
@@ -1227,13 +1227,13 @@ func TestEvidence(t *testing.T) {
 				},
 				Rule: Rule{
 					Bindings: map[string]string{
-						"S":       "Lucy",
+						"S":       "Dan",
 						"O":       "English",
 						"COUNTRY": "England",
 					},
-					Conditions: []Condition{
+					Conditions: []Conditioner{
 						ConditionRelationship{
-							Subject:      "Lucy",
+							Subject:      "Dan",
 							Relationship: "lives in",
 							Certainty:    100,
 							Object:       "England",

@@ -5,8 +5,10 @@ import (
 	"fmt"
 )
 
+// ConditionType describes the various types of evidence conditions that can be returned
 type ConditionType = int
 
+// All ConditionTypes
 const (
 	RelationshipType ConditionType = iota
 	ExpressionType
@@ -21,7 +23,7 @@ type EvidenceResponse struct {
 	Time         int          `json:"time,omitempty"`
 }
 
-// Evidence is an abstraction upon EvidenceResponse
+// Evidence is produced from the raw EvidenceResponse
 type Evidence struct {
 	FactID string `json:"factId,omitempty"`
 	Source string `json:"source,omitempty"`
@@ -30,11 +32,19 @@ type Evidence struct {
 	Time   int    `json:"time,omitempty"`
 }
 
-// String makes *Answer satisfy fmt.Stringer
+// String makes *Evidence satisfy fmt.Stringer
 func (e *Evidence) String() string {
-	return fmt.Sprintf("%s", e.Fact.Subject)
+	return fmt.Sprintf(
+		"%s (%s): %s",
+		e.FactID,
+		e.Source,
+		&e.Fact,
+	)
 }
 
+var _ fmt.Stringer = (*Evidence)(nil)
+
+// AsEvidence converts EvidenceResponse to Evidence
 func AsEvidence(response EvidenceResponse) (Evidence, error) {
 	rule, err := asRule(response.RuleResponse)
 	if err != nil {
@@ -50,6 +60,7 @@ func AsEvidence(response EvidenceResponse) (Evidence, error) {
 	}, nil
 }
 
+// Fact contains the triple and certainty
 type Fact struct {
 	Subject      ConceptInstance `json:"subject,omitempty"`
 	Relationship Relationship    `json:"relationship,omitempty"`
@@ -57,25 +68,46 @@ type Fact struct {
 	Certainty    int             `json:"certainty,omitempty"`
 }
 
+// String makes *Fact satifsy fmt.Stringer
+func (f *Fact) String() string {
+	return fmt.Sprintf(
+		"%s, %s, %s (%d)",
+		&f.Subject,
+		f.Relationship.Type,
+		&f.Object,
+		f.Certainty,
+	)
+}
+
+var _ fmt.Stringer = (*Fact)(nil)
+
+// Relationship connects concepts in a knowledge map
 type Relationship struct {
 	Type string `json:"type,omitempty"`
 }
 
+// ConceptInstance is an instance of a km concept
 type ConceptInstance struct {
 	Type     string      `json:"type,omitempty"`
 	Value    interface{} `json:"value,omitempty"`
 	DataType string      `json:"dataType,omitempty"`
 }
 
+func (ci *ConceptInstance) String() string {
+	return fmt.Sprintf("%s", ci.Value)
+}
+
+var _ fmt.Stringer = (*ConceptInstance)(nil)
+
 type ruleResponse struct {
 	Bindings   map[string]string `json:"bindings,omitempty"`
 	Conditions []rawCondition    `json:"conditions,omitempty"`
 }
 
-// Rule is an abstraction of RuleReponse
+// Rule is produced from the raw ruleReponse
 type Rule struct {
 	Bindings   map[string]string
-	Conditions []Condition
+	Conditions []Conditioner
 }
 
 func asRule(response ruleResponse) (Rule, error) {
@@ -90,13 +122,15 @@ func asRule(response ruleResponse) (Rule, error) {
 	}, nil
 }
 
-type Condition interface {
+// Conditioner is a common interface for the various conditionTypes
+type Conditioner interface {
 	Type() ConditionType
 	Salience() int
 }
 
-func asConditions(raw []rawCondition) ([]Condition, error) {
-	var conditions []Condition
+// asConditions converts the raw response conditions to conditions
+func asConditions(raw []rawCondition) ([]Conditioner, error) {
+	var conditions []Conditioner
 	for _, c := range raw {
 		if c.Relationship != "" {
 			rel := ConditionRelationship{
@@ -140,6 +174,7 @@ type rawCondition struct {
 	} `json:"expression,omitempty"`
 }
 
+// ConditionRelationship describes a condition created from a relationship
 type ConditionRelationship struct {
 	Certainty    int         `json:"certainty,omitempty"`
 	FactID       string      `json:"factID,omitempty"`
@@ -151,28 +186,34 @@ type ConditionRelationship struct {
 	salience     int         `json:"salience,omitempty"`
 }
 
+// Type of ConditionType
 func (cr ConditionRelationship) Type() ConditionType {
 	return RelationshipType
 }
 
+// Salience the salience value of the given condition
 func (cr ConditionRelationship) Salience() int {
 	return cr.salience
 }
 
+// ConditionExpression describes a condition created from an expression
 type ConditionExpression struct {
 	WasMet     bool       `json:"wasMet,omitempty"`
 	Expression Expression `json:"expression,omitempty"`
 	salience   int        `json:"salience,omitempty"`
 }
 
+// Expression is the text representation of a km expression
 type Expression struct {
 	Text string `json:"text,omitempty"`
 }
 
-func (cr ConditionExpression) Type() ConditionType {
+// Type of ConditionType
+func (ce ConditionExpression) Type() ConditionType {
 	return ExpressionType
 }
 
+// Salience the salience of the given condition
 func (ce ConditionExpression) Salience() int {
 	return ce.salience
 }
