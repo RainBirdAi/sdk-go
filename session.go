@@ -386,13 +386,13 @@ func (s *Session) Evidence(factID string, evidenceKey *string) (*Evidence, error
 		)
 	}
 
-	var response EvidenceResponse
+	var response evidenceResponse
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return nil, err
 	}
 
-	evidence, err := AsEvidence(response)
+	evidence, err := asEvidence(response)
 	if err != nil {
 		return nil, err
 	}

@@ -14,8 +14,8 @@ const (
 	ExpressionType
 )
 
-// EvidenceResponse is the raw response from the api
-type EvidenceResponse struct {
+// evidenceResponse is the raw response from the api
+type evidenceResponse struct {
 	FactID       string        `json:"factId,omitempty"`
 	Source       string        `json:"source,omitempty"`
 	Fact         Fact          `json:"fact,omitempty"`
@@ -44,8 +44,7 @@ func (e *Evidence) String() string {
 
 var _ fmt.Stringer = (*Evidence)(nil)
 
-// AsEvidence converts EvidenceResponse to Evidence
-func AsEvidence(response EvidenceResponse) (Evidence, error) {
+func asEvidence(response evidenceResponse) (Evidence, error) {
 	var rule *Rule
 	if response.RuleResponse != nil {
 		r, err := asRule(*response.RuleResponse)
@@ -90,7 +89,7 @@ type Relationship struct {
 	Type string `json:"type,omitempty"`
 }
 
-// ConceptInstance is an instance of a km concept
+// ConceptInstance is an instance of a knowledge map concept
 type ConceptInstance struct {
 	Type     string      `json:"type,omitempty"`
 	Value    interface{} `json:"value,omitempty"`
@@ -108,7 +107,7 @@ type ruleResponse struct {
 	Conditions []rawCondition    `json:"conditions,omitempty"`
 }
 
-// Rule is produced from the raw ruleReponse
+// Rule describes the conditions upon which a fact was produced
 type Rule struct {
 	Bindings   map[string]string
 	Conditions []Conditioner
@@ -126,7 +125,7 @@ func asRule(response ruleResponse) (*Rule, error) {
 	}, nil
 }
 
-// Conditioner is a common interface for the various conditionTypes
+// Conditioner is a common interface for the various ConditionTypes
 type Conditioner interface {
 	Type() ConditionType
 	Salience() int
@@ -195,7 +194,7 @@ func (cr ConditionRelationship) Type() ConditionType {
 	return RelationshipType
 }
 
-// Salience the salience value of the given condition
+// Salience value of the given condition
 func (cr ConditionRelationship) Salience() int {
 	return cr.salience
 }
@@ -207,7 +206,7 @@ type ConditionExpression struct {
 	salience   int        `json:"salience,omitempty"`
 }
 
-// Expression is the text representation of a km expression
+// Expression is the text representation of a knowledge map expression
 type Expression struct {
 	Text string `json:"text,omitempty"`
 }
@@ -217,7 +216,7 @@ func (ce ConditionExpression) Type() ConditionType {
 	return ExpressionType
 }
 
-// Salience the salience of the given condition
+// Salience value of the given condition
 func (ce ConditionExpression) Salience() int {
 	return ce.salience
 }
