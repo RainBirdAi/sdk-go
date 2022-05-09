@@ -74,7 +74,7 @@ type Fact struct {
 // String makes *Fact satifsy fmt.Stringer
 func (f *Fact) String() string {
 	return fmt.Sprintf(
-		"%s, %s, %s (%d)",
+		"%#v, %s, %#v (%d)",
 		&f.Subject,
 		f.Relationship.Type,
 		&f.Object,
