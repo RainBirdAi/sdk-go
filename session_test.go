@@ -1173,7 +1173,7 @@ func TestEvidence(t *testing.T) {
 				"rule": {
 					"bindings": {
 						"S": "Dan",
-						"O": "English",
+						"O": 100,
 						"COUNTRY": "England"
 					},
 					"conditions": [
@@ -1226,9 +1226,9 @@ func TestEvidence(t *testing.T) {
 					Certainty: 100,
 				},
 				Rule: &Rule{
-					Bindings: map[string]string{
+					Bindings: map[string]interface{}{
 						"S":       "Dan",
-						"O":       "English",
+						"O":       100.0,
 						"COUNTRY": "England",
 					},
 					Conditions: []Conditioner{

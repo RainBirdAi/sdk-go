@@ -103,13 +103,13 @@ func (ci *ConceptInstance) String() string {
 var _ fmt.Stringer = (*ConceptInstance)(nil)
 
 type ruleResponse struct {
-	Bindings   map[string]string `json:"bindings,omitempty"`
-	Conditions []rawCondition    `json:"conditions,omitempty"`
+	Bindings   map[string]interface{} `json:"bindings,omitempty"`
+	Conditions []rawCondition         `json:"conditions,omitempty"`
 }
 
 // Rule describes the conditions upon which a fact was produced
 type Rule struct {
-	Bindings   map[string]string
+	Bindings   map[string]interface{}
 	Conditions []Conditioner
 }
 
