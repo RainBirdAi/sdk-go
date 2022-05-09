@@ -1118,3 +1118,237 @@ func TestInteractionLog(t *testing.T) {
 		})
 	}
 }
+
+func TestEvidence(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+	sessionID := "1234"
+	factID := "WA:RF:1234"
+
+	testCases := []struct {
+		description    string
+		kmid           string
+		engine         *string
+		responseBody   *string
+		responseCode   int
+		expectEvidence *Evidence
+		expectErr      error
+	}{
+		{
+			description:    "Bad request",
+			responseCode:   http.StatusBadRequest,
+			responseBody:   stringPtr("Foo bar baz"),
+			expectEvidence: nil,
+			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description:    "Internal server error",
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   stringPtr("Foo bar baz"),
+			expectEvidence: nil,
+			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+		},
+		{
+			description:  "Returns correct evidence for rule",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`{
+				"factID": "WA:RF:1234",
+				"source": "rule",
+				"fact": {
+					"subject": {
+						"type": "Person",
+						"value": "Dan",
+						"dataType": "string"
+					},
+					"relationship": {
+						"type": "might speak"
+					},
+					"object": {
+						"type": "Language",
+						"value": "English",
+						"dataType": "string"
+					},
+					"certainty": 100
+				},
+				"time": 123456789,
+				"rule": {
+					"bindings": {
+						"S": "Dan",
+						"O": 100,
+						"COUNTRY": "England"
+					},
+					"conditions": [
+						{
+							"subject": "Dan",
+							"relationship": "lives in",
+							"object": "England",
+							"salience": 100,
+							"certainty": 100,
+							"factID": "WA:RF:1234",
+							"objectType": "string",
+							"factKey": "30d74cc5-7eb6-4c88-8e12-4897b47e3ee7"
+						},
+						{
+							"subject": "England",
+							"relationship": "has national language",
+							"object": "English",
+							"salience": 100,
+							"certainty": 100,
+							"factID": "WA:RF:1234",
+							"objectType": "string"
+						},
+						{
+							"wasMet": true,
+							"salience": 100,
+							"expression": {
+								"text": "1 gte 0"
+							}
+						}
+					]
+				}
+			}`),
+			expectEvidence: &Evidence{
+				FactID: factID,
+				Source: "rule",
+				Fact: Fact{
+					Subject: ConceptInstance{
+						Type:     "Person",
+						Value:    "Dan",
+						DataType: "string",
+					},
+					Relationship: Relationship{
+						Type: "might speak",
+					},
+					Object: ConceptInstance{
+						Type:     "Language",
+						Value:    "English",
+						DataType: "string",
+					},
+					Certainty: 100,
+				},
+				Rule: &Rule{
+					Bindings: map[string]interface{}{
+						"S":       "Dan",
+						"O":       100.0,
+						"COUNTRY": "England",
+					},
+					Conditions: []Conditioner{
+						ConditionRelationship{
+							Subject:      "Dan",
+							Relationship: "lives in",
+							Certainty:    100,
+							Object:       "England",
+							salience:     100,
+							FactID:       factID,
+							ObjectType:   "string",
+							FactKey:      stringPtr("30d74cc5-7eb6-4c88-8e12-4897b47e3ee7"),
+						},
+						ConditionRelationship{
+							Subject:      "England",
+							Relationship: "has national language",
+							Certainty:    100,
+							Object:       "English",
+							salience:     100,
+							FactID:       factID,
+							ObjectType:   "string",
+							FactKey:      nil,
+						},
+						ConditionExpression{
+							WasMet:   true,
+							salience: 100,
+							Expression: Expression{
+								Text: "1 gte 0",
+							},
+						},
+					},
+				},
+				Time: 123456789,
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Returns correct evidence for datasource",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`{
+				"factID": "WA:DF:1234",
+				"source": "datasource",
+				"fact": {
+					"subject": {
+						"type": "location",
+						"value": "London",
+						"dataType": "string"
+					},
+					"relationship": {
+						"type": "has temperature"
+					},
+					"object": {
+						"type": "temperature",
+						"value": "290.00",
+						"dataType": "string"
+					},
+					"certainty": 100
+				},
+				"time": 123456789
+			}`),
+			expectEvidence: &Evidence{
+				FactID: "WA:DF:1234",
+				Source: "datasource",
+				Fact: Fact{
+					Subject: ConceptInstance{
+						Type:     "location",
+						Value:    "London",
+						DataType: "string",
+					},
+					Relationship: Relationship{
+						Type: "has temperature",
+					},
+					Object: ConceptInstance{
+						Type:     "temperature",
+						Value:    "290.00",
+						DataType: "string",
+					},
+					Certainty: 100,
+				},
+				Rule: nil,
+				Time: 123456789,
+			},
+			expectErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // Capture
+		t.Run(tc.description, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/analysis/evidence/"+factID+"/"+sessionID, r.RequestURI)
+
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(tc.responseCode)
+					w.Write([]byte(*tc.responseBody))
+				}),
+			)
+			defer srv.Close()
+
+			client := &Client{
+				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
+				EnvironmentURL: srv.URL,
+				HTTPClient:     srv.Client(),
+			}
+
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
+
+			session, err := client.ResumeSession(sessionID)
+			require.Nil(t, err)
+
+			evidence, err := session.Evidence(factID, nil)
+			assert.Equal(t, tc.expectErr, err)
+			assert.Equal(t, tc.expectEvidence, evidence)
+		})
+	}
+
+}

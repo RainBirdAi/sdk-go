@@ -28,6 +28,8 @@ func usage() {
 	fmt.Println("    - Report CLI and API versions")
 	fmt.Printf("  %s interactions <session> <interactionKey>\n", os.Args[0])
 	fmt.Println("    - Get the interaction log for a session")
+	fmt.Printf(" %s evidence <session> <factID> <evidenceKey>\n", os.Args[0])
+	fmt.Println("    - Get the evidence for a given fact")
 	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
@@ -117,6 +119,12 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdInteractionsLog(os.Args[2], &os.Args[3])
+	case "evidence":
+		if len(os.Args) != 5 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdEvidence(os.Args[2], os.Args[3], &os.Args[4])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -318,5 +326,20 @@ func cmdInteractionsLog(sessionID string, interactionKey *string) error {
 		}
 	}
 	fmt.Println("")
+	return nil
+}
+
+func cmdEvidence(sessionID string, factID string, evidenceKey *string) error {
+	session, err := client.ResumeSession(sessionID)
+	if err != nil {
+		return err
+	}
+
+	evidence, err := session.Evidence(factID, evidenceKey)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("EVIDENCE: %s\n", evidence)
 	return nil
 }
