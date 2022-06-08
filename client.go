@@ -263,6 +263,7 @@ func (c *Client) Session(sessionID string, includeVersion bool, includeFacts boo
 		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+strings.Join(filter, ","),
 		nil,
 	)
+	req.SetBasicAuth(c.APIKey, "")
 	if err != nil {
 		return nil, err
 	}
