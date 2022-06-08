@@ -35,18 +35,24 @@ type KmInfo struct {
 }
 
 type Facts struct {
-	Global  []Fact
-	Context []Fact
-	Local   []Fact
+	Global  []FactInfo `json:"global,omitempty"`
+	Context []FactInfo `json:"context,omitempty"`
+	Local   []FactInfo `json:"local,omitempty"`
 }
 
 type FactInfo struct {
-	ID           string          `json:"id,omitempty"`
-	Source       string          `json:"source,omitempty"`
-	Subject      ConceptInstance `json:"subject,omitempty"`
-	Relationship Relationship    `json:"relationship,omitempty"`
-	Object       ConceptInstance `json:"object,omitempty"`
-	Certainty    int             `json:"certainty,omitempty"`
+	ID           string       `json:"id,omitempty"`
+	Source       string       `json:"source,omitempty"`
+	Subject      ConcInstance `json:"subject,omitempty"`
+	Relationship string       `json:"relationship,omitempty"`
+	Object       ConcInstance `json:"object,omitempty"`
+	Certainty    int          `json:"certainty,omitempty"`
+}
+
+type ConcInstance struct {
+	Concept  string      `json:"concept,omitempty"`
+	Value    interface{} `json:"value,omitempty"`
+	DataType string      `json:"dataType,omitempty"`
 }
 
 // InjectFact is the structure of facts to add to a session via the Inject call

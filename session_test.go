@@ -1411,6 +1411,190 @@ func TestSessionInfo(t *testing.T) {
 			},
 			expectErr: nil,
 		},
+		{
+			description:  "Returns facts info",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`{
+				"facts": {
+					"global": [],
+					"context": [],
+					"local": [
+						{
+							"id": "WA:AF:029f78551644e583e9214c6fa1cb85ee83949f97f3068ec0bca26b750e3106e9",
+							"subject": {
+								"concept": "Subject",
+								"value": "Dan",
+								"dataType": "string"
+							},
+							"relationship": "has date plural",
+							"object": {
+								"concept": "Date plural",
+								"value": 1655856000000,
+								"dataType": "date"
+							},
+							"certainty": 100,
+							"source": "answer"
+						},
+						{
+							"id": "WA:AF:49a8af17bddfb9a5cafe73ee3332cb056d4dc9e5e9895e4c2e2180c586523fe1",
+							"subject": {
+								"concept": "Subject",
+								"value": "Dan",
+								"dataType": "string"
+							},
+							"relationship": "has number singular",
+							"object": {
+								"concept": "Number singular",
+								"value": 8,
+								"dataType": "number"
+							},
+							"certainty": 100,
+							"source": "answer"
+						},
+						{
+							"id": "WA:AF:2cef310b47a6dd3072a59c8752e507753deedbda073eba2fa5189b9058ef795a",
+							"subject": {
+								"concept": "Subject",
+								"value": "Dan",
+								"dataType": "string"
+							},
+							"relationship": "has string plural",
+							"object": {
+								"concept": "String plural",
+								"value": "string plural 2",
+								"dataType": "string"
+							},
+							"certainty": 100,
+							"source": "answer"
+						},
+						{
+							"id": "WA:AF:fcd65f85fc5f01e76575ae5b245e71f8fe258cfa1c6e2da3795620b08010a8ba",
+							"subject": {
+								"concept": "Subject",
+								"value": "Dan",
+								"dataType": "string"
+							},
+							"relationship": "has truth",
+							"object": {
+								"concept": "Truth",
+								"value": true,
+								"dataType": "boolean"
+							},
+							"certainty": 100,
+							"source": "answer"
+						},
+						{
+							"id": "WA:RF:e70b10add03a2745860a81b9625fe0d9fe62373ebcb599281a9fc3f6813318d3",
+							"subject": {
+								"concept": "Subject",
+								"value": "Dan",
+								"dataType": "string"
+							},
+							"relationship": "relationship",
+							"object": {
+								"concept": "Result object",
+								"value": "string singular 1 string plural 2 8 5.15164 1656028800000 1655856000000 true",
+								"dataType": "string"
+							},
+							"certainty": 100,
+							"source": "rule"
+						}
+					]
+				}
+			}`),
+			includeVersionInfo: false,
+			includeFactsInfo:   true,
+			expectSession: &SessionInfo{
+				Km: nil,
+				Facts: &Facts{
+					Global:  []FactInfo{},
+					Context: []FactInfo{},
+					Local: []FactInfo{
+						{
+							ID: "WA:AF:029f78551644e583e9214c6fa1cb85ee83949f97f3068ec0bca26b750e3106e9",
+							Subject: ConcInstance{
+								Concept:  "Subject",
+								Value:    "Dan",
+								DataType: "string",
+							},
+							Relationship: "has date plural",
+							Object: ConcInstance{
+								Concept:  "Date plural",
+								Value:    float64(1655856000000),
+								DataType: "date",
+							},
+							Certainty: 100,
+							Source:    "answer",
+						},
+						{
+							ID: "WA:AF:49a8af17bddfb9a5cafe73ee3332cb056d4dc9e5e9895e4c2e2180c586523fe1",
+							Subject: ConcInstance{
+								Concept:  "Subject",
+								Value:    "Dan",
+								DataType: "string",
+							},
+							Relationship: "has number singular",
+							Object: ConcInstance{
+								Concept:  "Number singular",
+								Value:    float64(8),
+								DataType: "number",
+							},
+							Certainty: 100,
+							Source:    "answer",
+						},
+						{
+							ID: "WA:AF:2cef310b47a6dd3072a59c8752e507753deedbda073eba2fa5189b9058ef795a",
+							Subject: ConcInstance{
+								Concept:  "Subject",
+								Value:    "Dan",
+								DataType: "string",
+							},
+							Relationship: "has string plural",
+							Object: ConcInstance{
+								Concept:  "String plural",
+								Value:    "string plural 2",
+								DataType: "string",
+							},
+							Certainty: 100,
+							Source:    "answer",
+						},
+						{
+							ID: "WA:AF:fcd65f85fc5f01e76575ae5b245e71f8fe258cfa1c6e2da3795620b08010a8ba",
+							Subject: ConcInstance{
+								Concept:  "Subject",
+								Value:    "Dan",
+								DataType: "string",
+							},
+							Relationship: "has truth",
+							Object: ConcInstance{
+								Concept:  "Truth",
+								Value:    true,
+								DataType: "boolean",
+							},
+							Certainty: 100,
+							Source:    "answer",
+						},
+						{
+							ID: "WA:RF:e70b10add03a2745860a81b9625fe0d9fe62373ebcb599281a9fc3f6813318d3",
+							Subject: ConcInstance{
+								Concept:  "Subject",
+								Value:    "Dan",
+								DataType: "string",
+							},
+							Relationship: "relationship",
+							Object: ConcInstance{
+								Concept:  "Result object",
+								Value:    "string singular 1 string plural 2 8 5.15164 1656028800000 1655856000000 true",
+								DataType: "string",
+							},
+							Certainty: 100,
+							Source:    "rule",
+						},
+					},
+				},
+			},
+			expectErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
