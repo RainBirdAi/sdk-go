@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"time"
 )
 
 // Client is a grouped set of config for interacting with a Rainbird engine
@@ -41,6 +43,48 @@ var (
 // NoContext is the default way to interact with the engine; without defining a
 // context in which to work
 const NoContext string = ""
+
+// SessionInfo contains session information
+type SessionInfo struct {
+	Km    *KmInfo `json:"km,omitempty"`
+	Facts *Facts  `json:"facts,omitempty"`
+}
+
+type KmInfo struct {
+	ID             string     `json:"id,omitempty"`
+	Name           string     `json:"name,omitempty"`
+	VersionID      string     `json:"versionID,omitempty"`
+	VersionNumber  *int       `json:"versionNumber,omitempty"`
+	VersionCreated *time.Time `json:"versionCreated,omitempty"`
+	VersionStatus  string     `json:"versionStatus,omitempty"`
+}
+
+type Facts struct {
+	Global  []FactInfo `json:"global,omitempty"`
+	Context []FactInfo `json:"context,omitempty"`
+	Local   []FactInfo `json:"local,omitempty"`
+}
+
+type FactInfo struct {
+	ID           string       `json:"id,omitempty"`
+	Source       string       `json:"source,omitempty"`
+	Subject      ConcInstance `json:"subject,omitempty"`
+	Relationship string       `json:"relationship,omitempty"`
+	Object       ConcInstance `json:"object,omitempty"`
+	Certainty    int          `json:"certainty,omitempty"`
+}
+
+type ConcInstance struct {
+	Concept  string      `json:"concept,omitempty"`
+	Value    interface{} `json:"value,omitempty"`
+	DataType string      `json:"dataType,omitempty"`
+}
+
+func (ci *ConcInstance) String() string {
+	return fmt.Sprintf("%s", ci.Value)
+}
+
+var _ fmt.Stringer = (*ConcInstance)(nil)
 
 // HTTP retrieves an appropriate client for making HTTP calls
 func (c *Client) HTTP() *http.Client {
@@ -155,4 +199,98 @@ func (c *Client) Version() (string, error) {
 	}
 
 	return string(body), err
+}
+
+// Evidence returns Evidence for a given factID
+func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) (*Evidence, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/evidence/"+factID+"/"+sessionID,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if evidenceKey != nil {
+		req.Header.Set("x-evidence-key", *evidenceKey)
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var response evidenceResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	evidence, err := asEvidence(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &evidence, nil
+}
+
+func (c *Client) Session(sessionID string, includeVersion bool, includeFacts bool) (*SessionInfo, error) {
+	var filter []string
+	if includeVersion {
+		filter = append(filter, "version")
+	}
+	if includeFacts {
+		filter = append(filter, "facts")
+	}
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+strings.Join(filter, ","),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var info SessionInfo
+	err = json.NewDecoder(resp.Body).Decode(&info)
+	if err != nil {
+		return nil, err
+	}
+
+	return &info, nil
 }

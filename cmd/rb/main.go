@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	sdk "gitlab.com/rainbird-ai/sdk-go"
 )
@@ -30,6 +31,8 @@ func usage() {
 	fmt.Println("    - Get the interaction log for a session")
 	fmt.Printf(" %s evidence <session> <factID> <evidenceKey>\n", os.Args[0])
 	fmt.Println("    - Get the evidence for a given fact")
+	fmt.Printf(" %s session <session> <includeVersionInfo> <includeFactsInfo>\n", os.Args[0])
+	fmt.Println("    - Get information about a session")
 	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
@@ -125,6 +128,12 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdEvidence(os.Args[2], os.Args[3], &os.Args[4])
+	case "session":
+		if len(os.Args) != 5 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdSession(os.Args[2], os.Args[3], os.Args[4])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -330,16 +339,31 @@ func cmdInteractionsLog(sessionID string, interactionKey *string) error {
 }
 
 func cmdEvidence(sessionID string, factID string, evidenceKey *string) error {
-	session, err := client.ResumeSession(sessionID)
-	if err != nil {
-		return err
-	}
-
-	evidence, err := session.Evidence(factID, evidenceKey)
+	evidence, err := client.Evidence(sessionID, factID, evidenceKey)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("EVIDENCE: %s\n", evidence)
+	return nil
+}
+
+func cmdSession(sessionID string, includeVersionInfo string, includeFactsInfo string) error {
+	includeVersion, err := strconv.ParseBool(includeVersionInfo)
+	if err != nil {
+		return err
+	}
+
+	includeFacts, err := strconv.ParseBool(includeFactsInfo)
+	if err != nil {
+		return nil
+	}
+
+	info, err := client.Session(sessionID, includeVersion, includeFacts)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("SESSION: %v\n", info)
 	return nil
 }

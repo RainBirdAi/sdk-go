@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // Session is a started engine interaction with a knowledge map
@@ -17,42 +16,6 @@ type Session struct {
 	ID string
 
 	client *Client
-}
-
-// SessionInfo contains session information
-type SessionInfo struct {
-	Km    *KmInfo `json:"km,omitempty"`
-	Facts *Facts  `json:"facts,omitempty"`
-}
-
-type KmInfo struct {
-	ID             string     `json:"id,omitempty"`
-	Name           string     `json:"name,omitempty"`
-	VersionID      string     `json:"versionID,omitempty"`
-	VersionNumber  *int       `json:"versionNumber,omitempty"`
-	VersionCreated *time.Time `json:"versionCreated,omitempty"`
-	VersionStatus  string     `json:"versionStatus,omitempty"`
-}
-
-type Facts struct {
-	Global  []FactInfo `json:"global,omitempty"`
-	Context []FactInfo `json:"context,omitempty"`
-	Local   []FactInfo `json:"local,omitempty"`
-}
-
-type FactInfo struct {
-	ID           string       `json:"id,omitempty"`
-	Source       string       `json:"source,omitempty"`
-	Subject      ConcInstance `json:"subject,omitempty"`
-	Relationship string       `json:"relationship,omitempty"`
-	Object       ConcInstance `json:"object,omitempty"`
-	Certainty    int          `json:"certainty,omitempty"`
-}
-
-type ConcInstance struct {
-	Concept  string      `json:"concept,omitempty"`
-	Value    interface{} `json:"value,omitempty"`
-	DataType string      `json:"dataType,omitempty"`
 }
 
 // InjectFact is the structure of facts to add to a session via the Inject call
@@ -387,98 +350,4 @@ func (s *Session) Interactions(interactionKey *string) ([]InteractionEvent, erro
 	}
 
 	return interactions, nil
-}
-
-// Evidence returns Evidence for a given factID
-func (s *Session) Evidence(factID string, evidenceKey *string) (*Evidence, error) {
-	req, err := http.NewRequest(
-		http.MethodGet,
-		s.client.EnvironmentURL+"/analysis/evidence/"+factID+"/"+s.ID,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if evidenceKey != nil {
-		req.Header.Set("x-evidence-key", *evidenceKey)
-	}
-
-	resp, err := s.client.HTTP().Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
-	}
-
-	var response evidenceResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return nil, err
-	}
-
-	evidence, err := asEvidence(response)
-	if err != nil {
-		return nil, err
-	}
-
-	return &evidence, nil
-}
-
-func (s *Session) Session(includeVersion bool, includeFacts bool) (*SessionInfo, error) {
-	var filter []string
-	if includeVersion {
-		filter = append(filter, "version")
-	}
-	if includeFacts {
-		filter = append(filter, "facts")
-	}
-
-	req, err := http.NewRequest(
-		http.MethodGet,
-		s.client.EnvironmentURL+"/analysis/session/"+s.ID+"?filter="+strings.Join(filter, ","),
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.client.HTTP().Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
-	}
-
-	var info SessionInfo
-	err = json.NewDecoder(resp.Body).Decode(&info)
-	if err != nil {
-		return nil, err
-	}
-
-	return &info, nil
 }
