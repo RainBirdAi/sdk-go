@@ -249,6 +249,54 @@ func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) 
 	return &evidence, nil
 }
 
+// Interactions returns an array of time-stamped session events
+func (c *Client) Interactions(sessionID string, interactionKey *string) ([]InteractionEvent, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/interactions/"+sessionID,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if interactionKey != nil {
+		req.Header.Set("x-interaction-key", *interactionKey)
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var response []InteractionResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	interactions, err := InteractionEvents(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return interactions, nil
+}
+
 func (c *Client) Session(sessionID string, includeVersion bool, includeFacts bool) (*SessionInfo, error) {
 	var filter []string
 	if includeVersion {

@@ -547,6 +547,404 @@ func TestEvidence(t *testing.T) {
 
 }
 
+func TestInteractionLog(t *testing.T) {
+	stringPtr := func(s string) *string { return &s }
+	sessionID := "1234-5678"
+	time, _ := time.Parse("2006-01-02T03:04:05", "2022-02-15T00:00:00")
+
+	testCases := []struct {
+		description          string
+		kmid                 string
+		engine               *string
+		responseBody         *string
+		responseCode         int
+		expectInteractionLog []InteractionEvent
+		expectErr            error
+	}{
+		{
+			description:  "Correct interaction log for Start returned",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`[
+				{
+					"event": "start", 
+					"values": {
+						"start": {
+							"sessionID": "1",
+							"useDraft": true,
+							"kmVersionID": "1234-5678"
+						}
+					},
+					"created": "2022-02-15T00:00:00Z"
+				}
+			]`),
+			expectInteractionLog: []InteractionEvent{
+				{
+					Event:   StartEvent,
+					Created: time,
+					Data: Start{
+						SessionID:   "1",
+						KmVersionID: "1234-5678",
+						UseDraft:    true,
+					},
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Correct interaction log for Query, Questions returned",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`[
+				{
+					"event": "query", 
+					"values": {
+						"query": {
+							"subject": "Dan",
+							"relationship": "speaks"
+						}
+					},
+					"created": "2022-02-15T00:00:00Z"
+				},
+				{
+					"event": "question", 
+					"values": {
+						"questions": [
+							{
+								"subject":"Dan",
+								"dataType":"string",
+								"relationship":"speaks",
+								"type":"Second Form Object",
+								"plural":false,
+								"allowCF":true,
+								"allowUnknown":false,
+								"canAdd":true,
+								"prompt":"Where does Dan live?",
+								"knownAnswers":[]
+							},
+							{
+								"subject":"Tom",
+								"dataType":"string",
+								"relationship":"speaks",
+								"type":"Second Form Object",
+								"plural":false,
+								"allowCF":true,
+								"allowUnknown":false,
+								"canAdd":true,
+								"prompt":"Where does Tom live?",
+								"knownAnswers":[]
+							}
+						]
+					},
+					"created": "2022-02-15T00:00:00Z"
+				}
+			]`),
+			expectInteractionLog: []InteractionEvent{
+				{
+					Event:   QueryEvent,
+					Created: time,
+					Data: Query{
+						Subject:      stringPtr("Dan"),
+						Object:       nil,
+						Relationship: "speaks",
+					},
+				},
+				{
+					Event:   QuestionEvent,
+					Created: time,
+					Data: []Question{
+						{
+							AllowCF:      true,
+							AllowUnknown: false,
+							CanAdd:       true,
+							Concepts:     nil,
+							DataType:     "string",
+							KnownAnswers: []KnownAnswer{},
+							Plural:       false,
+							Prompt:       "Where does Dan live?",
+							Relationship: "speaks",
+							Subject:      "Dan",
+							Object:       "",
+							Type:         "Second Form Object",
+						},
+						{
+							AllowCF:      true,
+							AllowUnknown: false,
+							CanAdd:       true,
+							Concepts:     nil,
+							DataType:     "string",
+							KnownAnswers: []KnownAnswer{},
+							Plural:       false,
+							Prompt:       "Where does Tom live?",
+							Relationship: "speaks",
+							Subject:      "Tom",
+							Object:       "",
+							Type:         "Second Form Object",
+						},
+					},
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Correct interaction log for Injects returned",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`[
+				{
+					"event": "inject", 
+					"values": {
+						"facts": [
+							{
+								"subject": "Dan",
+								"object": "English",
+								"relationship": "speaks",
+								"cf": "100"
+							},
+							{
+								"subject": "Dan",
+								"object": "German",
+								"relationship": "speaks",
+								"cf": "90"
+							},
+							{
+								"subject": "Dan",
+								"object": "French",
+								"relationship": "speaks",
+								"cf": "80"
+							}
+						]
+					},
+					"created": "2022-02-15T00:00:00Z"
+				}
+			]`),
+			expectInteractionLog: []InteractionEvent{
+				{
+					Event:   InjectEvent,
+					Created: time,
+					Data: []InjectFact{
+						{
+							Subject:      "Dan",
+							Object:       "English",
+							Relationship: "speaks",
+							Certainty:    "100",
+						},
+						{
+							Subject:      "Dan",
+							Object:       "German",
+							Relationship: "speaks",
+							Certainty:    "90",
+						},
+						{
+							Subject:      "Dan",
+							Object:       "French",
+							Relationship: "speaks",
+							Certainty:    "80",
+						},
+					},
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Correct interaction log for Answers returned",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`[
+				{
+					"event": "answer", 
+					"values": {
+						"answers": [
+							{
+								"subject": "Dan",
+								"object": "English",
+								"relationship": "speaks",
+								"cf": "100",
+								"answer": "England"
+							},
+							{
+								"subject": "Dan",
+								"object": "German",
+								"relationship": "speaks",
+								"cf": "90"
+							},
+							{
+								"subject": "Dan",
+								"object": "French",
+								"relationship": "speaks",
+								"cf": "80"
+							}
+						]
+					},
+					"created": "2022-02-15T00:00:00Z"
+				}
+			]`),
+			expectInteractionLog: []InteractionEvent{
+				{
+					Event:   AnswerEvent,
+					Created: time,
+					Data: []QAnswer{
+						{
+							Subject:      "Dan",
+							Object:       "English",
+							Relationship: "speaks",
+							CF:           "100",
+							Answer:       "England",
+						},
+						{
+							Subject:      "Dan",
+							Object:       "German",
+							Relationship: "speaks",
+							CF:           "90",
+							Answer:       "",
+						},
+						{
+							Subject:      "Dan",
+							Object:       "French",
+							Relationship: "speaks",
+							CF:           "80",
+							Answer:       "",
+						},
+					},
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description:  "Correct interaction log for Datasources, Result returned",
+			responseCode: http.StatusOK,
+			responseBody: stringPtr(`[
+				{
+					"event": "datasource",
+					"values": {
+						"datasources": [
+							{
+								"relationship": "speaks",
+								"certainty": 100
+							},
+							{
+								"relationship": "speaks",
+								"certainty": 90
+							},
+							{
+								"relationship": "speaks",
+								"certainty": 80
+							}
+						]
+					},
+					"created": "2022-02-15T00:00:00Z"
+				},
+				{
+					"event": "result",
+					"values": {
+						"results": [
+							{
+								"certainty": 100,
+								"factID": "thisisthefactid",
+								"object": "England",
+								"relationship": "lives in",
+								"subject": "Dan"
+							},
+							{
+								"certainty": 90,
+								"factID": "thisisthefactid",
+								"object": "England",
+								"relationship": "lives in",
+								"subject": "Tom"
+							}
+						]
+					},
+					"created": "2022-02-15T00:00:00Z"
+				}
+			]`),
+			expectInteractionLog: []InteractionEvent{
+				{
+					Event:   DatasourceEvent,
+					Created: time,
+					Data: []Datasource{
+						{
+							Relationship: "speaks",
+							Certainty:    100,
+						},
+						{
+							Relationship: "speaks",
+							Certainty:    90,
+						},
+						{
+							Relationship: "speaks",
+							Certainty:    80,
+						},
+					},
+				},
+				{
+					Event:   ResultEvent,
+					Created: time,
+					Data: []Answer{
+						{
+							Subject:      "Dan",
+							Relationship: "lives in",
+							Object:       "England",
+							Certainty:    100,
+							FactID:       "thisisthefactid",
+						},
+						{
+							Subject:      "Tom",
+							Relationship: "lives in",
+							Object:       "England",
+							Certainty:    90,
+							FactID:       "thisisthefactid",
+						},
+					},
+				},
+			},
+			expectErr: nil,
+		},
+		{
+			description:          "Bad request",
+			responseCode:         http.StatusBadRequest,
+			responseBody:         stringPtr("Foo bar baz"),
+			expectInteractionLog: nil,
+			expectErr:            errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description:          "Internal server error",
+			responseCode:         http.StatusInternalServerError,
+			responseBody:         stringPtr("Foo bar baz"),
+			expectInteractionLog: nil,
+			expectErr:            errors.New("API returned error 500: Foo bar baz"),
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // Capture
+		t.Run(tc.description, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/analysis/interactions/"+sessionID, r.RequestURI)
+
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(tc.responseCode)
+					w.Write([]byte(*tc.responseBody))
+				}),
+			)
+			defer srv.Close()
+
+			client := &Client{
+				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
+				EnvironmentURL: srv.URL,
+				HTTPClient:     srv.Client(),
+			}
+
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
+
+			interactionLog, err := client.Interactions(sessionID, nil)
+			assert.Equal(t, tc.expectErr, err)
+			assert.Equal(t, tc.expectInteractionLog, interactionLog)
+		})
+	}
+}
+
 func TestSession(t *testing.T) {
 	stringPtr := func(s string) *string { return &s }
 	sessionID := "1234"

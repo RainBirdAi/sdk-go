@@ -285,12 +285,7 @@ func cmdVersion() {
 }
 
 func cmdInteractionsLog(sessionID string, interactionKey *string) error {
-	session, err := client.ResumeSession(sessionID)
-	if err != nil {
-		return err
-	}
-
-	interactions, err := session.Interactions(interactionKey)
+	interactions, err := client.Interactions(sessionID, interactionKey)
 	if err != nil {
 		return err
 	}
