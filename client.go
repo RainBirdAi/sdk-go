@@ -50,6 +50,31 @@ type SessionInfo struct {
 	Facts *Facts  `json:"facts,omitempty"`
 }
 
+// String makes *SessionInfo satisfy fmt.Stringer
+func (s *SessionInfo) String() string {
+	if s.Facts == nil {
+		return "km: " + s.Km.String()
+	}
+
+	var facts []string
+	var allFacts []Fact
+	allFacts = append(allFacts, s.Facts.Global...)
+	allFacts = append(allFacts, s.Facts.Context...)
+	allFacts = append(allFacts, s.Facts.Local...)
+
+	for _, f := range allFacts {
+		facts = append(facts, f.String())
+	}
+
+	if s.Km == nil {
+		return "facts: " + strings.Join(facts, "\n")
+	}
+
+	return fmt.Sprint("km: "+s.Km.String()+"\nfacts: %s", strings.Join(facts, "\n"))
+}
+
+var _ fmt.Stringer = (*SessionInfo)(nil)
+
 type KmInfo struct {
 	ID             string     `json:"id,omitempty"`
 	Name           string     `json:"name,omitempty"`
@@ -58,6 +83,25 @@ type KmInfo struct {
 	VersionCreated *time.Time `json:"versionCreated,omitempty"`
 	VersionStatus  string     `json:"versionStatus,omitempty"`
 }
+
+// String makes *Evidence satisfy fmt.Stringer
+func (s *KmInfo) String() string {
+	str := fmt.Sprintf(
+		"%s (%s %s), %s",
+		s.ID,
+		s.Name,
+		s.VersionID,
+		s.VersionStatus,
+	)
+
+	if s.VersionCreated == nil {
+		return str
+	}
+
+	return str + " " + s.VersionCreated.Format(time.RFC3339)
+}
+
+var _ fmt.Stringer = (*SessionInfo)(nil)
 
 type Facts struct {
 	Global  []Fact `json:"global,omitempty"`

@@ -81,12 +81,12 @@ type Fact struct {
 // String makes *Fact satifsy fmt.Stringer
 func (f *Fact) String() string {
 	return fmt.Sprintf(
-		"%s (%s): %#v, %s, %#v (%d)",
+		"%s (%s): %v, %s, %v (%d)",
 		f.ID,
 		f.Source,
-		f.Subject,
+		f.Subject.String(),
 		f.Relationship,
-		f.Object,
+		f.Object.String(),
 		f.Certainty,
 	)
 }

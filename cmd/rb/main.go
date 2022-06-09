@@ -359,6 +359,6 @@ func cmdSession(sessionID string, includeVersionInfo string, includeFactsInfo st
 		return err
 	}
 
-	fmt.Printf("SESSION: %v\n", info)
+	fmt.Printf("SESSION: %s\n", info)
 	return nil
 }
