@@ -69,6 +69,7 @@ type factResponse struct {
 	Certainty    int             `json:"certainty,omitempty"`
 }
 
+// Fact contains information that the engine knows from a session
 type Fact struct {
 	ID           string          `json:"id,omitempty"`
 	Source       string          `json:"source,omitempty"`

@@ -20,18 +20,17 @@ type Session struct {
 
 // InjectFact is the structure of facts to add to a session via the Inject call
 type InjectFact struct {
-	Subject      string  `json:"subject"`
-	Relationship string  `json:"relationship"`
-	Object       string  `json:"object"`
-	Certainty    string  `json:"cf"`
-	CertFactor   *string `json:"certainty,omitempty"`
+	Subject      string `json:"subject"`
+	Relationship string `json:"relationship"`
+	Object       string `json:"object"`
+	Certainty    string `json:"cf"`
+	CertFactor   *int   `json:"certainty,omitempty"`
 }
 
 // CertaintyFactor is a common interface to handle both cf and certainty from responses
 func (i *InjectFact) CertaintyFactor() int {
 	if i.CertFactor != nil {
-		toInt, _ := strconv.Atoi(*i.CertFactor)
-		return toInt
+		return *i.CertFactor
 	}
 	toInt, _ := strconv.Atoi(i.Certainty)
 	return toInt

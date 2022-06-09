@@ -75,6 +75,7 @@ func (s *SessionInfo) String() string {
 
 var _ fmt.Stringer = (*SessionInfo)(nil)
 
+// KmInfo represents the knowledge map version information returned from the session endpoint
 type KmInfo struct {
 	ID             string     `json:"id,omitempty"`
 	Name           string     `json:"name,omitempty"`
@@ -103,6 +104,7 @@ func (s *KmInfo) String() string {
 
 var _ fmt.Stringer = (*SessionInfo)(nil)
 
+// Facts contains the three types of Fact a session can have
 type Facts struct {
 	Global  []Fact `json:"global,omitempty"`
 	Context []Fact `json:"context,omitempty"`
@@ -320,6 +322,7 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 	return interactions, nil
 }
 
+// Session returns information about a session
 func (c *Client) Session(sessionID string, includeVersion bool, includeFacts bool) (*SessionInfo, error) {
 	var filter []string
 	if includeVersion {
