@@ -60,31 +60,10 @@ type KmInfo struct {
 }
 
 type Facts struct {
-	Global  []FactInfo `json:"global,omitempty"`
-	Context []FactInfo `json:"context,omitempty"`
-	Local   []FactInfo `json:"local,omitempty"`
+	Global  []Fact `json:"global,omitempty"`
+	Context []Fact `json:"context,omitempty"`
+	Local   []Fact `json:"local,omitempty"`
 }
-
-type FactInfo struct {
-	ID           string       `json:"id,omitempty"`
-	Source       string       `json:"source,omitempty"`
-	Subject      ConcInstance `json:"subject,omitempty"`
-	Relationship string       `json:"relationship,omitempty"`
-	Object       ConcInstance `json:"object,omitempty"`
-	Certainty    int          `json:"certainty,omitempty"`
-}
-
-type ConcInstance struct {
-	Concept  string      `json:"concept,omitempty"`
-	Value    interface{} `json:"value,omitempty"`
-	DataType string      `json:"dataType,omitempty"`
-}
-
-func (ci *ConcInstance) String() string {
-	return fmt.Sprintf("%s", ci.Value)
-}
-
-var _ fmt.Stringer = (*ConcInstance)(nil)
 
 // HTTP retrieves an appropriate client for making HTTP calls
 func (c *Client) HTTP() *http.Client {

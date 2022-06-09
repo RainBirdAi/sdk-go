@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func stringPtr(s string) *string { return &s }
+
 func TestClientNewSessionValidation(t *testing.T) {
 	testCases := []struct {
 		description string
@@ -58,8 +60,6 @@ func TestClientNewSessionValidation(t *testing.T) {
 }
 
 func TestClientNewSessionStartCalls(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		apiKey      string
@@ -317,7 +317,6 @@ func TestClientVersion(t *testing.T) {
 }
 
 func TestEvidence(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
 	sessionID := "1234"
 	factID := "WA:RF:1234"
 
@@ -404,19 +403,17 @@ func TestEvidence(t *testing.T) {
 				}
 			}`),
 			expectEvidence: &Evidence{
-				FactID: factID,
-				Source: "rule",
 				Fact: Fact{
+					ID:     factID,
+					Source: "rule",
 					Subject: ConceptInstance{
-						Type:     "Person",
+						Type:     stringPtr("Person"),
 						Value:    "Dan",
 						DataType: "string",
 					},
-					Relationship: Relationship{
-						Type: "might speak",
-					},
+					Relationship: "might speak",
 					Object: ConceptInstance{
-						Type:     "Language",
+						Type:     stringPtr("Language"),
 						Value:    "English",
 						DataType: "string",
 					},
@@ -487,19 +484,17 @@ func TestEvidence(t *testing.T) {
 				"time": 123456789
 			}`),
 			expectEvidence: &Evidence{
-				FactID: "WA:DF:1234",
-				Source: "datasource",
 				Fact: Fact{
+					ID:     "WA:DF:1234",
+					Source: "datasource",
 					Subject: ConceptInstance{
-						Type:     "location",
+						Type:     stringPtr("location"),
 						Value:    "London",
 						DataType: "string",
 					},
-					Relationship: Relationship{
-						Type: "has temperature",
-					},
+					Relationship: "has temperature",
 					Object: ConceptInstance{
-						Type:     "temperature",
+						Type:     stringPtr("temperature"),
 						Value:    "290.00",
 						DataType: "string",
 					},
@@ -548,7 +543,6 @@ func TestEvidence(t *testing.T) {
 }
 
 func TestInteractionLog(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
 	sessionID := "1234-5678"
 	time, _ := time.Parse("2006-01-02T03:04:05", "2022-02-15T00:00:00")
 
@@ -1099,19 +1093,19 @@ func TestSession(t *testing.T) {
 			expectSession: &SessionInfo{
 				Km: nil,
 				Facts: &Facts{
-					Global:  []FactInfo{},
-					Context: []FactInfo{},
-					Local: []FactInfo{
+					Global:  []Fact{},
+					Context: []Fact{},
+					Local: []Fact{
 						{
 							ID: "WA:AF:029f78551644e583e9214c6fa1cb85ee83949f97f3068ec0bca26b750e3106e9",
-							Subject: ConcInstance{
-								Concept:  "Subject",
+							Subject: ConceptInstance{
+								Concept:  stringPtr("Subject"),
 								Value:    "Dan",
 								DataType: "string",
 							},
 							Relationship: "has date plural",
-							Object: ConcInstance{
-								Concept:  "Date plural",
+							Object: ConceptInstance{
+								Concept:  stringPtr("Date plural"),
 								Value:    float64(1655856000000),
 								DataType: "date",
 							},
@@ -1120,14 +1114,14 @@ func TestSession(t *testing.T) {
 						},
 						{
 							ID: "WA:AF:49a8af17bddfb9a5cafe73ee3332cb056d4dc9e5e9895e4c2e2180c586523fe1",
-							Subject: ConcInstance{
-								Concept:  "Subject",
+							Subject: ConceptInstance{
+								Concept:  stringPtr("Subject"),
 								Value:    "Dan",
 								DataType: "string",
 							},
 							Relationship: "has number singular",
-							Object: ConcInstance{
-								Concept:  "Number singular",
+							Object: ConceptInstance{
+								Concept:  stringPtr("Number singular"),
 								Value:    float64(8),
 								DataType: "number",
 							},
@@ -1136,14 +1130,14 @@ func TestSession(t *testing.T) {
 						},
 						{
 							ID: "WA:AF:2cef310b47a6dd3072a59c8752e507753deedbda073eba2fa5189b9058ef795a",
-							Subject: ConcInstance{
-								Concept:  "Subject",
+							Subject: ConceptInstance{
+								Concept:  stringPtr("Subject"),
 								Value:    "Dan",
 								DataType: "string",
 							},
 							Relationship: "has string plural",
-							Object: ConcInstance{
-								Concept:  "String plural",
+							Object: ConceptInstance{
+								Concept:  stringPtr("String plural"),
 								Value:    "string plural 2",
 								DataType: "string",
 							},
@@ -1152,14 +1146,14 @@ func TestSession(t *testing.T) {
 						},
 						{
 							ID: "WA:AF:fcd65f85fc5f01e76575ae5b245e71f8fe258cfa1c6e2da3795620b08010a8ba",
-							Subject: ConcInstance{
-								Concept:  "Subject",
+							Subject: ConceptInstance{
+								Concept:  stringPtr("Subject"),
 								Value:    "Dan",
 								DataType: "string",
 							},
 							Relationship: "has truth",
-							Object: ConcInstance{
-								Concept:  "Truth",
+							Object: ConceptInstance{
+								Concept:  stringPtr("Truth"),
 								Value:    true,
 								DataType: "boolean",
 							},
@@ -1168,14 +1162,14 @@ func TestSession(t *testing.T) {
 						},
 						{
 							ID: "WA:RF:e70b10add03a2745860a81b9625fe0d9fe62373ebcb599281a9fc3f6813318d3",
-							Subject: ConcInstance{
-								Concept:  "Subject",
+							Subject: ConceptInstance{
+								Concept:  stringPtr("Subject"),
 								Value:    "Dan",
 								DataType: "string",
 							},
 							Relationship: "relationship",
-							Object: ConcInstance{
-								Concept:  "Result object",
+							Object: ConceptInstance{
+								Concept:  stringPtr("Result object"),
 								Value:    "string singular 1 string plural 2 8 5.15164 1656028800000 1655856000000 true",
 								DataType: "string",
 							},
