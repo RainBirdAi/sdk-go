@@ -939,39 +939,32 @@ func TestInteractionLog(t *testing.T) {
 	}
 }
 
-func TestSession(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
+func TestSessionKmVersion(t *testing.T) {
 	sessionID := "1234"
 	created, _ := time.Parse(time.RFC3339, "2022-04-20T13:13:31.000Z")
 
 	testCases := []struct {
-		description        string
-		kmid               string
-		engine             *string
-		responseBody       *string
-		responseCode       int
-		includeVersionInfo bool
-		includeFactsInfo   bool
-		expectSession      *SessionInfo
-		expectErr          error
+		description  string
+		kmid         string
+		engine       *string
+		responseBody *string
+		responseCode int
+		expectKm     *Km
+		expectErr    error
 	}{
 		{
-			description:        "Bad request",
-			responseCode:       http.StatusBadRequest,
-			responseBody:       stringPtr("Foo bar baz"),
-			expectSession:      nil,
-			includeVersionInfo: false,
-			includeFactsInfo:   false,
-			expectErr:          errors.New("API returned error 400: Foo bar baz"),
+			description:  "Bad request",
+			responseCode: http.StatusBadRequest,
+			responseBody: stringPtr("Foo bar baz"),
+			expectKm:     nil,
+			expectErr:    errors.New("API returned error 400: Foo bar baz"),
 		},
 		{
-			description:        "Internal server error",
-			responseCode:       http.StatusInternalServerError,
-			responseBody:       stringPtr("Foo bar baz"),
-			expectSession:      nil,
-			includeVersionInfo: false,
-			includeFactsInfo:   false,
-			expectErr:          errors.New("API returned error 500: Foo bar baz"),
+			description:  "Internal server error",
+			responseCode: http.StatusInternalServerError,
+			responseBody: stringPtr("Foo bar baz"),
+			expectKm:     nil,
+			expectErr:    errors.New("API returned error 500: Foo bar baz"),
 		},
 		{
 			description:  "Returns version info",
@@ -983,19 +976,76 @@ func TestSession(t *testing.T) {
 				"versionCreated": "2022-04-20T13:13:31.000Z",
 				"versionStatus": "Draft"
 			}}`),
-			includeVersionInfo: true,
-			includeFactsInfo:   false,
-			expectSession: &SessionInfo{
-				Km: &KmInfo{
-					ID:             "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
-					Name:           "concept types",
-					VersionID:      "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
-					VersionCreated: &created,
-					VersionStatus:  "Draft",
-				},
-				Facts: nil,
+			expectKm: &Km{
+				ID:             "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
+				Name:           "concept types",
+				VersionID:      "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
+				VersionCreated: &created,
+				VersionStatus:  "Draft",
 			},
 			expectErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // Capture
+		t.Run(tc.description, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, http.MethodGet, r.Method)
+
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(tc.responseCode)
+					w.Write([]byte(*tc.responseBody))
+				}),
+			)
+			defer srv.Close()
+
+			client := &Client{
+				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
+				EnvironmentURL: srv.URL,
+				HTTPClient:     srv.Client(),
+			}
+
+			if tc.engine != nil {
+				client.Engine = *tc.engine
+			}
+
+			km, err := client.SessionKmVersion(sessionID)
+			assert.Equal(t, tc.expectErr, err)
+			assert.Equal(t, tc.expectKm, km)
+		})
+	}
+
+}
+
+func TestSessionFacts(t *testing.T) {
+	sessionID := "1234"
+
+	testCases := []struct {
+		description  string
+		kmid         string
+		engine       *string
+		responseBody *string
+		responseCode int
+		expectFacts  *Facts
+		expectErr    error
+	}{
+		{
+			description:  "Bad request",
+			responseCode: http.StatusBadRequest,
+			responseBody: stringPtr("Foo bar baz"),
+			expectFacts:  nil,
+			expectErr:    errors.New("API returned error 400: Foo bar baz"),
+		},
+		{
+			description:  "Internal server error",
+			responseCode: http.StatusInternalServerError,
+			responseBody: stringPtr("Foo bar baz"),
+			expectFacts:  nil,
+			expectErr:    errors.New("API returned error 500: Foo bar baz"),
 		},
 		{
 			description:  "Returns facts info",
@@ -1088,94 +1138,89 @@ func TestSession(t *testing.T) {
 					]
 				}
 			}`),
-			includeVersionInfo: false,
-			includeFactsInfo:   true,
-			expectSession: &SessionInfo{
-				Km: nil,
-				Facts: &Facts{
-					Global:  []Fact{},
-					Context: []Fact{},
-					Local: []Fact{
-						{
-							ID: "WA:AF:029f78551644e583e9214c6fa1cb85ee83949f97f3068ec0bca26b750e3106e9",
-							Subject: ConceptInstance{
-								Concept:  stringPtr("Subject"),
-								Value:    "Dan",
-								DataType: "string",
-							},
-							Relationship: "has date plural",
-							Object: ConceptInstance{
-								Concept:  stringPtr("Date plural"),
-								Value:    float64(1655856000000),
-								DataType: "date",
-							},
-							Certainty: 100,
-							Source:    "answer",
+			expectFacts: &Facts{
+				Global:  []Fact{},
+				Context: []Fact{},
+				Local: []Fact{
+					{
+						ID: "WA:AF:029f78551644e583e9214c6fa1cb85ee83949f97f3068ec0bca26b750e3106e9",
+						Subject: ConceptInstance{
+							Concept:  stringPtr("Subject"),
+							Value:    "Dan",
+							DataType: "string",
 						},
-						{
-							ID: "WA:AF:49a8af17bddfb9a5cafe73ee3332cb056d4dc9e5e9895e4c2e2180c586523fe1",
-							Subject: ConceptInstance{
-								Concept:  stringPtr("Subject"),
-								Value:    "Dan",
-								DataType: "string",
-							},
-							Relationship: "has number singular",
-							Object: ConceptInstance{
-								Concept:  stringPtr("Number singular"),
-								Value:    float64(8),
-								DataType: "number",
-							},
-							Certainty: 100,
-							Source:    "answer",
+						Relationship: "has date plural",
+						Object: ConceptInstance{
+							Concept:  stringPtr("Date plural"),
+							Value:    float64(1655856000000),
+							DataType: "date",
 						},
-						{
-							ID: "WA:AF:2cef310b47a6dd3072a59c8752e507753deedbda073eba2fa5189b9058ef795a",
-							Subject: ConceptInstance{
-								Concept:  stringPtr("Subject"),
-								Value:    "Dan",
-								DataType: "string",
-							},
-							Relationship: "has string plural",
-							Object: ConceptInstance{
-								Concept:  stringPtr("String plural"),
-								Value:    "string plural 2",
-								DataType: "string",
-							},
-							Certainty: 100,
-							Source:    "answer",
+						Certainty: 100,
+						Source:    "answer",
+					},
+					{
+						ID: "WA:AF:49a8af17bddfb9a5cafe73ee3332cb056d4dc9e5e9895e4c2e2180c586523fe1",
+						Subject: ConceptInstance{
+							Concept:  stringPtr("Subject"),
+							Value:    "Dan",
+							DataType: "string",
 						},
-						{
-							ID: "WA:AF:fcd65f85fc5f01e76575ae5b245e71f8fe258cfa1c6e2da3795620b08010a8ba",
-							Subject: ConceptInstance{
-								Concept:  stringPtr("Subject"),
-								Value:    "Dan",
-								DataType: "string",
-							},
-							Relationship: "has truth",
-							Object: ConceptInstance{
-								Concept:  stringPtr("Truth"),
-								Value:    true,
-								DataType: "boolean",
-							},
-							Certainty: 100,
-							Source:    "answer",
+						Relationship: "has number singular",
+						Object: ConceptInstance{
+							Concept:  stringPtr("Number singular"),
+							Value:    float64(8),
+							DataType: "number",
 						},
-						{
-							ID: "WA:RF:e70b10add03a2745860a81b9625fe0d9fe62373ebcb599281a9fc3f6813318d3",
-							Subject: ConceptInstance{
-								Concept:  stringPtr("Subject"),
-								Value:    "Dan",
-								DataType: "string",
-							},
-							Relationship: "relationship",
-							Object: ConceptInstance{
-								Concept:  stringPtr("Result object"),
-								Value:    "string singular 1 string plural 2 8 5.15164 1656028800000 1655856000000 true",
-								DataType: "string",
-							},
-							Certainty: 100,
-							Source:    "rule",
+						Certainty: 100,
+						Source:    "answer",
+					},
+					{
+						ID: "WA:AF:2cef310b47a6dd3072a59c8752e507753deedbda073eba2fa5189b9058ef795a",
+						Subject: ConceptInstance{
+							Concept:  stringPtr("Subject"),
+							Value:    "Dan",
+							DataType: "string",
 						},
+						Relationship: "has string plural",
+						Object: ConceptInstance{
+							Concept:  stringPtr("String plural"),
+							Value:    "string plural 2",
+							DataType: "string",
+						},
+						Certainty: 100,
+						Source:    "answer",
+					},
+					{
+						ID: "WA:AF:fcd65f85fc5f01e76575ae5b245e71f8fe258cfa1c6e2da3795620b08010a8ba",
+						Subject: ConceptInstance{
+							Concept:  stringPtr("Subject"),
+							Value:    "Dan",
+							DataType: "string",
+						},
+						Relationship: "has truth",
+						Object: ConceptInstance{
+							Concept:  stringPtr("Truth"),
+							Value:    true,
+							DataType: "boolean",
+						},
+						Certainty: 100,
+						Source:    "answer",
+					},
+					{
+						ID: "WA:RF:e70b10add03a2745860a81b9625fe0d9fe62373ebcb599281a9fc3f6813318d3",
+						Subject: ConceptInstance{
+							Concept:  stringPtr("Subject"),
+							Value:    "Dan",
+							DataType: "string",
+						},
+						Relationship: "relationship",
+						Object: ConceptInstance{
+							Concept:  stringPtr("Result object"),
+							Value:    "string singular 1 string plural 2 8 5.15164 1656028800000 1655856000000 true",
+							DataType: "string",
+						},
+						Certainty: 100,
+						Source:    "rule",
 					},
 				},
 			},
@@ -1209,9 +1254,9 @@ func TestSession(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			info, err := client.Session(sessionID, tc.includeVersionInfo, tc.includeFactsInfo)
+			facts, err := client.SessionFacts(sessionID)
 			assert.Equal(t, tc.expectErr, err)
-			assert.Equal(t, tc.expectSession, info)
+			assert.Equal(t, tc.expectFacts, facts)
 		})
 	}
 

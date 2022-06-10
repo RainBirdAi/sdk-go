@@ -44,39 +44,8 @@ var (
 // context in which to work
 const NoContext string = ""
 
-// SessionInfo contains session information
-type SessionInfo struct {
-	Km    *KmInfo `json:"km,omitempty"`
-	Facts *Facts  `json:"facts,omitempty"`
-}
-
-// String makes *SessionInfo satisfy fmt.Stringer
-func (s *SessionInfo) String() string {
-	if s.Facts == nil {
-		return "km: " + s.Km.String()
-	}
-
-	var facts []string
-	var allFacts []Fact
-	allFacts = append(allFacts, s.Facts.Global...)
-	allFacts = append(allFacts, s.Facts.Context...)
-	allFacts = append(allFacts, s.Facts.Local...)
-
-	for _, f := range allFacts {
-		facts = append(facts, f.String())
-	}
-
-	if s.Km == nil {
-		return "facts: " + strings.Join(facts, "\n")
-	}
-
-	return fmt.Sprint("km: "+s.Km.String()+"\nfacts: %s", strings.Join(facts, "\n"))
-}
-
-var _ fmt.Stringer = (*SessionInfo)(nil)
-
-// KmInfo represents the knowledge map version information returned from the session endpoint
-type KmInfo struct {
+// Km represents the knowledge map version information returned from the session endpoint
+type Km struct {
 	ID             string     `json:"id,omitempty"`
 	Name           string     `json:"name,omitempty"`
 	VersionID      string     `json:"versionID,omitempty"`
@@ -86,7 +55,7 @@ type KmInfo struct {
 }
 
 // String makes *Evidence satisfy fmt.Stringer
-func (s *KmInfo) String() string {
+func (s *Km) String() string {
 	str := fmt.Sprintf(
 		"%s (%s %s), %s",
 		s.ID,
@@ -102,7 +71,7 @@ func (s *KmInfo) String() string {
 	return str + " " + s.VersionCreated.Format(time.RFC3339)
 }
 
-var _ fmt.Stringer = (*SessionInfo)(nil)
+var _ fmt.Stringer = (*Km)(nil)
 
 // Facts contains the three types of Fact a session can have
 type Facts struct {
@@ -110,6 +79,28 @@ type Facts struct {
 	Context []Fact `json:"context,omitempty"`
 	Local   []Fact `json:"local,omitempty"`
 }
+
+// All helper function that returns all facts in one slice
+func (f *Facts) All() []Fact {
+	var allFacts []Fact
+	allFacts = append(allFacts, f.Global...)
+	allFacts = append(allFacts, f.Context...)
+	allFacts = append(allFacts, f.Local...)
+	return allFacts
+}
+
+// String makes *Facts satisfy fmt.Stringer
+func (f *Facts) String() string {
+	var facts []string
+
+	for _, f := range f.All() {
+		facts = append(facts, f.String())
+	}
+
+	return strings.Join(facts, "\n")
+}
+
+var _ fmt.Stringer = (*Facts)(nil)
 
 // HTTP retrieves an appropriate client for making HTTP calls
 func (c *Client) HTTP() *http.Client {
@@ -322,19 +313,48 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 	return interactions, nil
 }
 
-// Session returns information about a session
-func (c *Client) Session(sessionID string, includeVersion bool, includeFacts bool) (*SessionInfo, error) {
-	var filter []string
-	if includeVersion {
-		filter = append(filter, "version")
+// SessionKmVersion returns information about the knowledge map for a session
+func (c *Client) SessionKmVersion(sessionID string) (*Km, error) {
+	resp, err := c.session(sessionID, "version")
+	if err != nil {
+		return nil, err
 	}
-	if includeFacts {
-		filter = append(filter, "facts")
+	defer resp.Body.Close()
+
+	var sessionKm struct {
+		Km `json:"km,omitempty"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&sessionKm)
+	if err != nil {
+		return nil, err
 	}
 
+	return &sessionKm.Km, nil
+}
+
+// SessionFacts returns facts from the given session
+func (c *Client) SessionFacts(sessionID string) (*Facts, error) {
+	resp, err := c.session(sessionID, "facts")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var sessionFacts struct {
+		Facts `json:"facts,omitempty"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&sessionFacts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sessionFacts.Facts, nil
+}
+
+func (c *Client) session(sessionID, filterStr string) (*http.Response, error) {
 	req, err := http.NewRequest(
 		http.MethodGet,
-		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+strings.Join(filter, ","),
+		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+filterStr,
 		nil,
 	)
 	req.SetBasicAuth(c.APIKey, "")
@@ -346,7 +366,6 @@ func (c *Client) Session(sessionID string, includeVersion bool, includeFacts boo
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
 		rawBody, err := ioutil.ReadAll(resp.Body)
@@ -361,11 +380,5 @@ func (c *Client) Session(sessionID string, includeVersion bool, includeFacts boo
 		)
 	}
 
-	var info SessionInfo
-	err = json.NewDecoder(resp.Body).Decode(&info)
-	if err != nil {
-		return nil, err
-	}
-
-	return &info, nil
+	return resp, nil
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 
 	sdk "gitlab.com/rainbird-ai/sdk-go"
 )
@@ -31,8 +30,10 @@ func usage() {
 	fmt.Println("    - Get the interaction log for a session")
 	fmt.Printf(" %s evidence <session> <factID> <evidenceKey>\n", os.Args[0])
 	fmt.Println("    - Get the evidence for a given fact")
-	fmt.Printf(" %s session <session> <includeVersionInfo> <includeFactsInfo>\n", os.Args[0])
-	fmt.Println("    - Get information about a session")
+	fmt.Printf(" %s km <session>\n", os.Args[0])
+	fmt.Println("    - Get knowledge map information from a session")
+	fmt.Printf(" %s facts <session>\n", os.Args[0])
+	fmt.Println("    - Get the facts from a session")
 	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
@@ -128,12 +129,18 @@ func main() {
 			os.Exit(0)
 		}
 		err = cmdEvidence(os.Args[2], os.Args[3], &os.Args[4])
-	case "session":
-		if len(os.Args) != 5 {
+	case "km":
+		if len(os.Args) != 3 {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdSession(os.Args[2], os.Args[3], os.Args[4])
+		err = cmdSessionKmVersion(os.Args[2])
+	case "facts":
+		if len(os.Args) != 3 {
+			usage()
+			os.Exit(0)
+		}
+		err = cmdSessionFacts(os.Args[2])
 	default:
 		fmt.Printf("ERR: Unknown operation '%s'\n", os.Args[1])
 		fmt.Printf("::\n\n")
@@ -343,22 +350,22 @@ func cmdEvidence(sessionID string, factID string, evidenceKey *string) error {
 	return nil
 }
 
-func cmdSession(sessionID string, includeVersionInfo string, includeFactsInfo string) error {
-	includeVersion, err := strconv.ParseBool(includeVersionInfo)
+func cmdSessionKmVersion(sessionID string) error {
+	km, err := client.SessionKmVersion(sessionID)
 	if err != nil {
 		return err
 	}
 
-	includeFacts, err := strconv.ParseBool(includeFactsInfo)
-	if err != nil {
-		return nil
-	}
+	fmt.Printf("KM: %s\n", km)
+	return nil
+}
 
-	info, err := client.Session(sessionID, includeVersion, includeFacts)
+func cmdSessionFacts(sessionID string) error {
+	facts, err := client.SessionFacts(sessionID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("SESSION: %s\n", info)
+	fmt.Printf("FACTS: %s\n", facts)
 	return nil
 }
