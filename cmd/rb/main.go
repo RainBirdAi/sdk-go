@@ -351,7 +351,7 @@ func cmdEvidence(sessionID string, factID string, evidenceKey *string) error {
 }
 
 func cmdSessionKmVersion(sessionID string) error {
-	km, err := client.SessionKmVersion(sessionID)
+	km, err := client.KnowledgeMapVersion(sessionID)
 	if err != nil {
 		return err
 	}

@@ -949,7 +949,7 @@ func TestSessionKmVersion(t *testing.T) {
 		engine       *string
 		responseBody *string
 		responseCode int
-		expectKm     *Km
+		expectKm     *KnowledgeMap
 		expectErr    error
 	}{
 		{
@@ -976,7 +976,7 @@ func TestSessionKmVersion(t *testing.T) {
 				"versionCreated": "2022-04-20T13:13:31.000Z",
 				"versionStatus": "Draft"
 			}}`),
-			expectKm: &Km{
+			expectKm: &KnowledgeMap{
 				ID:             "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
 				Name:           "concept types",
 				VersionID:      "5042ae3a-723a-45fa-bd6c-2d09e96e75f6",
@@ -1013,7 +1013,7 @@ func TestSessionKmVersion(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			km, err := client.SessionKmVersion(sessionID)
+			km, err := client.KnowledgeMapVersion(sessionID)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectKm, km)
 		})

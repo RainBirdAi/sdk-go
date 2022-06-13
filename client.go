@@ -44,8 +44,8 @@ var (
 // context in which to work
 const NoContext string = ""
 
-// Km represents the knowledge map version information returned from the session endpoint
-type Km struct {
+// KnowledgeMap represents the knowledge map version information returned from the session endpoint
+type KnowledgeMap struct {
 	ID             string     `json:"id,omitempty"`
 	Name           string     `json:"name,omitempty"`
 	VersionID      string     `json:"versionID,omitempty"`
@@ -55,7 +55,7 @@ type Km struct {
 }
 
 // String makes *Evidence satisfy fmt.Stringer
-func (s *Km) String() string {
+func (s *KnowledgeMap) String() string {
 	str := fmt.Sprintf(
 		"%s (%s %s), %s",
 		s.ID,
@@ -71,7 +71,7 @@ func (s *Km) String() string {
 	return str + " " + s.VersionCreated.Format(time.RFC3339)
 }
 
-var _ fmt.Stringer = (*Km)(nil)
+var _ fmt.Stringer = (*KnowledgeMap)(nil)
 
 // Facts contains the three types of Fact a session can have
 type Facts struct {
@@ -80,8 +80,8 @@ type Facts struct {
 	Local   []Fact `json:"local,omitempty"`
 }
 
-// All helper function that returns all facts in one slice
-func (f *Facts) All() []Fact {
+// Flatten helper function that returns all facts in one slice
+func (f *Facts) Flatten() []Fact {
 	var allFacts []Fact
 	allFacts = append(allFacts, f.Global...)
 	allFacts = append(allFacts, f.Context...)
@@ -93,7 +93,7 @@ func (f *Facts) All() []Fact {
 func (f *Facts) String() string {
 	var facts []string
 
-	for _, f := range f.All() {
+	for _, f := range f.Flatten() {
 		facts = append(facts, f.String())
 	}
 
@@ -305,16 +305,11 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 		return nil, err
 	}
 
-	interactions, err := InteractionEvents(response)
-	if err != nil {
-		return nil, err
-	}
-
-	return interactions, nil
+	return InteractionEvents(response)
 }
 
-// SessionKmVersion returns information about the knowledge map for a session
-func (c *Client) SessionKmVersion(sessionID string) (*Km, error) {
+// KnowledgeMapVersion returns information about the knowledge map for a session
+func (c *Client) KnowledgeMapVersion(sessionID string) (*KnowledgeMap, error) {
 	resp, err := c.session(sessionID, "version")
 	if err != nil {
 		return nil, err
@@ -322,14 +317,14 @@ func (c *Client) SessionKmVersion(sessionID string) (*Km, error) {
 	defer resp.Body.Close()
 
 	var sessionKm struct {
-		Km `json:"km,omitempty"`
+		KnowledgeMap `json:"km,omitempty"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&sessionKm)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sessionKm.Km, nil
+	return &sessionKm.KnowledgeMap, nil
 }
 
 // SessionFacts returns facts from the given session
