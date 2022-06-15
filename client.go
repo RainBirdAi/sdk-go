@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+	"time"
 )
 
 // Client is a grouped set of config for interacting with a Rainbird engine
@@ -41,6 +43,64 @@ var (
 // NoContext is the default way to interact with the engine; without defining a
 // context in which to work
 const NoContext string = ""
+
+// KnowledgeMap represents the knowledge map version information returned from the session endpoint
+type KnowledgeMap struct {
+	ID             string     `json:"id,omitempty"`
+	Name           string     `json:"name,omitempty"`
+	VersionID      string     `json:"versionID,omitempty"`
+	VersionNumber  *int       `json:"versionNumber,omitempty"`
+	VersionCreated *time.Time `json:"versionCreated,omitempty"`
+	VersionStatus  string     `json:"versionStatus,omitempty"`
+}
+
+// String makes *Evidence satisfy fmt.Stringer
+func (s *KnowledgeMap) String() string {
+	str := fmt.Sprintf(
+		"%s (%s %s), %s",
+		s.ID,
+		s.Name,
+		s.VersionID,
+		s.VersionStatus,
+	)
+
+	if s.VersionCreated == nil {
+		return str
+	}
+
+	return str + " " + s.VersionCreated.Format(time.RFC3339)
+}
+
+var _ fmt.Stringer = (*KnowledgeMap)(nil)
+
+// Facts contains the three types of Fact a session can have
+type Facts struct {
+	Global  []Fact `json:"global,omitempty"`
+	Context []Fact `json:"context,omitempty"`
+	Local   []Fact `json:"local,omitempty"`
+}
+
+// Flatten helper function that returns all facts in one slice
+func (f *Facts) Flatten() []Fact {
+	var allFacts []Fact
+	allFacts = append(allFacts, f.Global...)
+	allFacts = append(allFacts, f.Context...)
+	allFacts = append(allFacts, f.Local...)
+	return allFacts
+}
+
+// String makes *Facts satisfy fmt.Stringer
+func (f *Facts) String() string {
+	var facts []string
+
+	for _, f := range f.Flatten() {
+		facts = append(facts, f.String())
+	}
+
+	return strings.Join(facts, "\n")
+}
+
+var _ fmt.Stringer = (*Facts)(nil)
 
 // HTTP retrieves an appropriate client for making HTTP calls
 func (c *Client) HTTP() *http.Client {
@@ -155,4 +215,165 @@ func (c *Client) Version() (string, error) {
 	}
 
 	return string(body), err
+}
+
+// Evidence returns Evidence for a given factID
+func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) (*Evidence, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/evidence/"+factID+"/"+sessionID,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if evidenceKey != nil {
+		req.Header.Set("x-evidence-key", *evidenceKey)
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var response evidenceResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	evidence, err := asEvidence(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &evidence, nil
+}
+
+// Interactions returns an array of time-stamped session events
+func (c *Client) Interactions(sessionID string, interactionKey *string) ([]InteractionEvent, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/interactions/"+sessionID,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if interactionKey != nil {
+		req.Header.Set("x-interaction-key", *interactionKey)
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	var response []InteractionResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	return InteractionEvents(response)
+}
+
+// KnowledgeMapVersion returns information about the knowledge map for a session
+func (c *Client) KnowledgeMapVersion(sessionID string) (*KnowledgeMap, error) {
+	resp, err := c.session(sessionID, "version")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var sessionKm struct {
+		KnowledgeMap `json:"km,omitempty"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&sessionKm)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sessionKm.KnowledgeMap, nil
+}
+
+// SessionFacts returns facts from the given session
+func (c *Client) SessionFacts(sessionID string) (*Facts, error) {
+	resp, err := c.session(sessionID, "facts")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var sessionFacts struct {
+		Facts `json:"facts,omitempty"`
+	}
+	err = json.NewDecoder(resp.Body).Decode(&sessionFacts)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sessionFacts.Facts, nil
+}
+
+func (c *Client) session(sessionID, filterStr string) (*http.Response, error) {
+	req, err := http.NewRequest(
+		http.MethodGet,
+		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+filterStr,
+		nil,
+	)
+	req.SetBasicAuth(c.APIKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.HTTP().Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode >= 400 {
+		rawBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf(
+			"API returned error %d: %s",
+			resp.StatusCode,
+			string(rawBody),
+		)
+	}
+
+	return resp, nil
 }

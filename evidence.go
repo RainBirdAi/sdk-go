@@ -18,28 +18,21 @@ const (
 type evidenceResponse struct {
 	FactID       string        `json:"factId,omitempty"`
 	Source       string        `json:"source,omitempty"`
-	Fact         Fact          `json:"fact,omitempty"`
+	Fact         factResponse  `json:"fact,omitempty"`
 	RuleResponse *ruleResponse `json:"rule,omitempty"`
 	Time         int           `json:"time,omitempty"`
 }
 
 // Evidence is produced from the raw EvidenceResponse
 type Evidence struct {
-	FactID string `json:"factId,omitempty"`
-	Source string `json:"source,omitempty"`
-	Fact   Fact   `json:"fact,omitempty"`
-	Rule   *Rule  `json:"rule,omitempty"`
-	Time   int    `json:"time,omitempty"`
+	Fact Fact  `json:"fact,omitempty"`
+	Rule *Rule `json:"rule,omitempty"`
+	Time int   `json:"time,omitempty"`
 }
 
 // String makes *Evidence satisfy fmt.Stringer
 func (e *Evidence) String() string {
-	return fmt.Sprintf(
-		"%s (%s): %s",
-		e.FactID,
-		e.Source,
-		&e.Fact,
-	)
+	return e.Fact.String()
 }
 
 var _ fmt.Stringer = (*Evidence)(nil)
@@ -53,20 +46,35 @@ func asEvidence(response evidenceResponse) (Evidence, error) {
 		}
 		rule = r
 	}
+	fr := response.Fact
 
 	return Evidence{
-		FactID: response.FactID,
-		Source: response.Source,
-		Fact:   response.Fact,
-		Rule:   rule,
-		Time:   response.Time,
+		Fact: Fact{
+			ID:           response.FactID,
+			Source:       response.Source,
+			Subject:      fr.Subject,
+			Relationship: fr.Relationship.Type,
+			Object:       fr.Object,
+			Certainty:    fr.Certainty,
+		},
+		Rule: rule,
+		Time: response.Time,
 	}, nil
 }
 
-// Fact contains the triple and certainty
-type Fact struct {
+type factResponse struct {
 	Subject      ConceptInstance `json:"subject,omitempty"`
 	Relationship Relationship    `json:"relationship,omitempty"`
+	Object       ConceptInstance `json:"object,omitempty"`
+	Certainty    int             `json:"certainty,omitempty"`
+}
+
+// Fact contains information that the engine knows from a session
+type Fact struct {
+	ID           string          `json:"id,omitempty"`
+	Source       string          `json:"source,omitempty"`
+	Subject      ConceptInstance `json:"subject,omitempty"`
+	Relationship string          `json:"relationship,omitempty"`
 	Object       ConceptInstance `json:"object,omitempty"`
 	Certainty    int             `json:"certainty,omitempty"`
 }
@@ -74,10 +82,12 @@ type Fact struct {
 // String makes *Fact satifsy fmt.Stringer
 func (f *Fact) String() string {
 	return fmt.Sprintf(
-		"%#v, %s, %#v (%d)",
-		&f.Subject,
-		f.Relationship.Type,
-		&f.Object,
+		"%s (%s): %v, %s, %v (%d)",
+		f.ID,
+		f.Source,
+		f.Subject.String(),
+		f.Relationship,
+		f.Object.String(),
 		f.Certainty,
 	)
 }
@@ -91,9 +101,18 @@ type Relationship struct {
 
 // ConceptInstance is an instance of a knowledge map concept
 type ConceptInstance struct {
-	Type     string      `json:"type,omitempty"`
+	Type     *string     `json:"type,omitempty"`
+	Concept  *string     `json:"concept,omitempty"`
 	Value    interface{} `json:"value,omitempty"`
 	DataType string      `json:"dataType,omitempty"`
+}
+
+// GetConcept returns the name of the concept - sometimes refered to as the type
+func (ci *ConceptInstance) GetConcept() string {
+	if ci.Concept == nil {
+		return *ci.Type
+	}
+	return *ci.Concept
 }
 
 func (ci *ConceptInstance) String() string {
