@@ -51,7 +51,7 @@ func objectStr(q *Question) string {
 		return "?"
 	}
 
-	return strObj
+	return fmt.Sprintf("%v", strObj)
 }
 
 // Satisfy interfaces
