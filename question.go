@@ -24,7 +24,7 @@ type Question struct {
 	Prompt       string
 	Relationship string
 	Subject      string
-	Object       string
+	Object       interface{}
 	Type         string
 }
 
@@ -35,12 +35,23 @@ func (q *Question) String() string {
 		sub = "?"
 	}
 
-	obj := q.Object
-	if obj == "" {
-		obj = "?"
-	}
+	obj := objectStr(q)
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
+}
+
+// toString handles the casting of an object and can return early
+func objectStr(q *Question) string {
+	if q.Object == nil {
+		return "?"
+	}
+
+	strObj, ok := q.Object.(string)
+	if ok && strObj == "" {
+		return "?"
+	}
+
+	return fmt.Sprintf("%v", strObj)
 }
 
 // Satisfy interfaces
