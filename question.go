@@ -36,7 +36,8 @@ func (q *Question) String() string {
 	}
 
 	obj := q.Object
-	if obj == "" {
+	strObj, ok := obj.(string)
+	if obj == nil || (ok && strObj == "") {
 		obj = "?"
 	}
 
