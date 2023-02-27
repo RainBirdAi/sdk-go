@@ -24,7 +24,7 @@ type Question struct {
 	Prompt       string
 	Relationship string
 	Subject      string
-	Object       string
+	Object       interface{}
 	Type         string
 }
 
