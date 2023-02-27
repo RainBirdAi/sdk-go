@@ -35,13 +35,23 @@ func (q *Question) String() string {
 		sub = "?"
 	}
 
-	obj := q.Object
-	strObj, ok := obj.(string)
-	if obj == nil || (ok && strObj == "") {
-		obj = "?"
-	}
+	obj := objectStr(q)
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
+}
+
+// toString handles the casting of an object and can return early
+func objectStr(q *Question) string {
+	if q.Object == nil {
+		return "?"
+	}
+
+	strObj, ok := q.Object.(string)
+	if ok && strObj == "" {
+		return "?"
+	}
+
+	return strObj
 }
 
 // Satisfy interfaces
