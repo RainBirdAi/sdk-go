@@ -560,7 +560,7 @@ func TestInteractionLog(t *testing.T) {
 			responseCode: http.StatusOK,
 			responseBody: stringPtr(`[
 				{
-					"event": "start", 
+					"event": "start",
 					"values": {
 						"start": {
 							"sessionID": "1",
@@ -589,7 +589,7 @@ func TestInteractionLog(t *testing.T) {
 			responseCode: http.StatusOK,
 			responseBody: stringPtr(`[
 				{
-					"event": "query", 
+					"event": "query",
 					"values": {
 						"query": {
 							"subject": "Dan",
@@ -599,7 +599,7 @@ func TestInteractionLog(t *testing.T) {
 					"created": "2022-02-15T00:00:00Z"
 				},
 				{
-					"event": "question", 
+					"event": "question",
 					"values": {
 						"questions": [
 							{
@@ -656,7 +656,7 @@ func TestInteractionLog(t *testing.T) {
 							Prompt:       "Where does Dan live?",
 							Relationship: "speaks",
 							Subject:      "Dan",
-							Object:       "",
+							Object:       interface{}(nil),
 							Type:         "Second Form Object",
 						},
 						{
@@ -670,7 +670,7 @@ func TestInteractionLog(t *testing.T) {
 							Prompt:       "Where does Tom live?",
 							Relationship: "speaks",
 							Subject:      "Tom",
-							Object:       "",
+							Object:       interface{}(nil),
 							Type:         "Second Form Object",
 						},
 					},
@@ -683,7 +683,7 @@ func TestInteractionLog(t *testing.T) {
 			responseCode: http.StatusOK,
 			responseBody: stringPtr(`[
 				{
-					"event": "inject", 
+					"event": "inject",
 					"values": {
 						"facts": [
 							{
@@ -742,7 +742,7 @@ func TestInteractionLog(t *testing.T) {
 			responseCode: http.StatusOK,
 			responseBody: stringPtr(`[
 				{
-					"event": "answer", 
+					"event": "answer",
 					"values": {
 						"answers": [
 							{
