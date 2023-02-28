@@ -51,12 +51,12 @@ var _ fmt.Stringer = (*InjectFact)(nil)
 
 // QAnswer is a user's answer to an Question from the engine
 type QAnswer struct {
-	Subject      string `json:"subject"`
-	Relationship string `json:"relationship"`
-	Object       string `json:"object"`
-	CF           string `json:"cf"`
-	Certainty    *int   `json:"certainty,omitempty"`
-	Answer       string `json:"answer,omitempty"`
+	Subject      string      `json:"subject"`
+	Relationship string      `json:"relationship"`
+	Object       interface{} `json:"object"`
+	CF           string      `json:"cf"`
+	Certainty    *int        `json:"certainty,omitempty"`
+	Answer       string      `json:"answer,omitempty"`
 }
 
 // CertaintyFactor is a common interface to handle both cf and certainty from responses
