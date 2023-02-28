@@ -398,6 +398,53 @@ func TestSessionResponse(t *testing.T) {
 			expectErr:     nil,
 		},
 		{
+			description: "Simple response that returns a question with float object",
+			answers: []QAnswer{
+				{
+					Subject:      "John",
+					Relationship: "Speaks",
+					Object:       float64(12),
+					CF:           "100",
+				},
+			},
+
+			expectCalls:  2,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":12,"cf":"100"}]}`,
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"question": {
+					"subject":"John",
+					"object":"12",
+					"dataType":"string",
+					"relationship":"lives in",
+					"type":"Second Form Object",
+					"plural":false,
+					"allowCF":true,
+					"allowUnknown":false,
+					"canAdd":true,
+					"prompt":"Where does John live?",
+					"knownAnswers":[]
+				}
+			}`,
+
+			expectQuestion: &Question{
+				AllowCF:      true,
+				AllowUnknown: false,
+				CanAdd:       true,
+				Concepts:     nil,
+				DataType:     "string",
+				KnownAnswers: []KnownAnswer{},
+				Plural:       false,
+				Prompt:       "Where does John live?",
+				Relationship: "lives in",
+				Subject:      "John",
+				Object:       "12",
+				Type:         "Second Form Object",
+			},
+			expectAnswers: nil,
+			expectErr:     nil,
+		},
+		{
 			description: "Simple response that returns a question (alt engine)",
 			answers: []QAnswer{
 				{
