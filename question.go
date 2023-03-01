@@ -23,18 +23,14 @@ type Question struct {
 	Plural       bool
 	Prompt       string
 	Relationship string
-	Subject      string
+	Subject      interface{}
 	Object       interface{}
 	Type         string
 }
 
 // String makes *Question satisfy fmt.Stringer
 func (q *Question) String() string {
-	sub := q.Subject
-	if sub == "" {
-		sub = "?"
-	}
-
+	sub := subjectStr(q)
 	obj := objectStr(q)
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
@@ -52,6 +48,18 @@ func objectStr(q *Question) string {
 	}
 
 	return fmt.Sprintf("%v", strObj)
+}
+
+func subjectStr(q *Question) string {
+	if q.Subject == nil {
+		return "?"
+	}
+
+	strSubj, ok := q.Subject.(string)
+	if ok && strSubj == "" {
+		return "?"
+	}
+	return fmt.Sprintf("%v", strSubj)
 }
 
 // Satisfy interfaces
