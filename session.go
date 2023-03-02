@@ -126,13 +126,13 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub interface{}, rel string, obj interface{}) (*Question, *[]Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
 
 	payloadS := struct {
-		Subject      interface{} `json:"subject,omitempty"`
+		Subject      string      `json:"subject,omitempty"`
 		Relationship string      `json:"relationship"`
 		Object       interface{} `json:"object,omitempty"`
 	}{
