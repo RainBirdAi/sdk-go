@@ -34,7 +34,6 @@ func (q *Question) String() string {
 	if sub == "" {
 		sub = "?"
 	}
-
 	obj := objectStr(q)
 
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)

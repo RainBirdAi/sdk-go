@@ -192,7 +192,7 @@ func TestSessionQuery(t *testing.T) {
 				}]
 			}`,
 			expectCalls: 2,
-			expectBody:  `{"subject":"John","relationship":"lives in"}`,
+			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
 			expectAnswers: &[]Answer{
@@ -224,7 +224,7 @@ func TestSessionQuery(t *testing.T) {
 				}]
 			}`,
 			expectCalls: 2,
-			expectBody:  `{"subject":"John","relationship":"lives in"}`,
+			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
 			expectAnswers: &[]Answer{
@@ -247,7 +247,7 @@ func TestSessionQuery(t *testing.T) {
 			responseCode: http.StatusBadRequest,
 			responseBody: "Foo bar baz",
 			expectCalls:  2,
-			expectBody:   `{"subject":"John","relationship":"lives in"}`,
+			expectBody:   `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
 			expectAnswers:  nil,
@@ -262,7 +262,7 @@ func TestSessionQuery(t *testing.T) {
 			responseCode: http.StatusInternalServerError,
 			responseBody: `{ "error": "some JSON returned" }`,
 			expectCalls:  2,
-			expectBody:   `{"subject":"John","relationship":"lives in"}`,
+			expectBody:   `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
 			expectAnswers:  nil,
