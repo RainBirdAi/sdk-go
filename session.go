@@ -20,7 +20,7 @@ type Session struct {
 
 // InjectFact is the structure of facts to add to a session via the Inject call
 type InjectFact struct {
-	Subject      interface{} `json:"subject"`
+	Subject      string      `json:"subject"`
 	Relationship string      `json:"relationship"`
 	Object       interface{} `json:"object"`
 	Certainty    string      `json:"cf"`

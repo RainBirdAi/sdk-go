@@ -58,22 +58,10 @@ func TestSessionInject(t *testing.T) {
 					Object:       "baz2",
 					Certainty:    "122",
 				},
-				{
-					Subject:      1234,
-					Relationship: "bar2",
-					Object:       1234,
-					Certainty:    "100",
-				},
-				{
-					Subject:      123,
-					Relationship: "bar2",
-					Object:       true,
-					Certainty:    "100",
-				},
 			},
 			responseCode: http.StatusOK,
 			expectCalls:  2,
-			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121"},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122"},{"subject":1234,"relationship":"bar2","object":1234,"cf":"100"},{"subject":123,"relationship":"bar2","object":true,"cf":"100"}]`,
+			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121"},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122"}]`,
 			expectErr:    nil,
 		},
 		{
