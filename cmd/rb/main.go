@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tsuru/gnuflag"
+
 	sdk "gitlab.com/rainbird-ai/sdk-go"
 )
 
@@ -15,13 +17,13 @@ func usage() {
 	fmt.Printf("  %s config\n", os.Args[0])
 	fmt.Println("    - Show running configuration and exit")
 	fmt.Printf("  %s inject <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
-	fmt.Println("    - Inject a fect into <session>")
+	fmt.Println("    - Inject a fact into <session>")
 	fmt.Printf("  %s query <session> <subject> <relationship> <object>\n", os.Args[0])
 	fmt.Println("    - Make a query against <session>, receive question or answers")
 	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
 	fmt.Println("    - Response to pending question in <session>")
-	fmt.Printf("  %s start <kmid> <contextid>\n", os.Args[0])
-	fmt.Println("    - Start a new session for knowledge map <kmid> and context ID <contextid>, receive a session ID for querying")
+	fmt.Printf("  %s start <kmid> --contextid --useDraft --version\n", os.Args[0])
+	fmt.Println("    - Start a new session for knowledge map <kmid>, context ID flag --contextid, useDraft flag --useDraft and specific version number flag --version, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
@@ -37,7 +39,7 @@ func usage() {
 	fmt.Println("")
 	fmt.Println("Environment variables:")
 	fmt.Println("  RB_API_KEY - credentials to interact with Rainbird (Required)")
-	fmt.Println("  RB_ENGINE - Select engine (Default is API's default, usually Yolanda)")
+	fmt.Println("  RB_ENGINE - Select engine (Default is API's default, usually Laserbeak)")
 	fmt.Println("  RB_API_URL - API URL (Default is https://api.rainbird.ai)")
 }
 
@@ -100,11 +102,23 @@ func main() {
 			os.Args[6],
 		)
 	case "start":
-		if len(os.Args) != 4 {
+		var contextID = gnuflag.String("context", "", "Context id to be used")
+		var useDraft = gnuflag.Bool("useDraft", false, "Use draft version")
+		var version = gnuflag.Int("version", -1, "Use a specific version")
+		gnuflag.Parse(true)
+
+		if contextID != nil && *contextID == "" {
+			contextID = nil
+		}
+		if version != nil && *version == -1 {
+			version = nil
+		}
+
+		if len(os.Args) < 3 {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdStart(os.Args[2], os.Args[3])
+		err = cmdStart(os.Args[2], contextID, useDraft, version)
 	case "undo":
 		if len(os.Args) != 3 {
 			usage()
@@ -245,12 +259,12 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 	return nil
 }
 
-func cmdStart(kmID string, contextID string) error {
+func cmdStart(kmID string, contextID *string, useDraft *bool, version *int) error {
 	if client.APIKey == "" {
 		return errors.New("missing required environment variable RB_API_KEY")
 	}
 
-	session, err := client.NewSession(kmID, contextID)
+	session, err := client.NewSession(kmID, contextID, useDraft, version)
 	if err != nil {
 		return err
 	}

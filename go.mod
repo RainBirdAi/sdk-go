@@ -6,5 +6,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/tsuru/gnuflag v0.0.0-20151217162021-86b8c1b864aa
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
