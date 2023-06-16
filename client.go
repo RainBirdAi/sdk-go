@@ -41,6 +41,10 @@ var (
 	ErrNewSessionInvalidKMID = errors.New("NewSessionInvalidKMID")
 )
 
+// NoContext is the default way to interact with the engine; without defining a
+// context in which to work
+const NoContext string = ""
+
 // KnowledgeMap represents the knowledge map version information returned from the session endpoint
 type KnowledgeMap struct {
 	ID             string     `json:"id,omitempty"`
@@ -50,10 +54,6 @@ type KnowledgeMap struct {
 	VersionCreated *time.Time `json:"versionCreated,omitempty"`
 	VersionStatus  string     `json:"versionStatus,omitempty"`
 }
-
-// NoContext is the default way to interact with the engine; without defining a
-// context in which to work
-const NoContext string = ""
 
 // String makes *Evidence satisfy fmt.Stringer
 func (s *KnowledgeMap) String() string {

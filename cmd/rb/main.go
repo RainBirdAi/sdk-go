@@ -23,7 +23,7 @@ func usage() {
 	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
 	fmt.Println("    - Response to pending question in <session>")
 	fmt.Printf("  %s start <kmid> <contextid> --useDraft --version\n", os.Args[0])
-	fmt.Println("    - Start a new session for knowledge map <kmid>, context ID  <contextid>, useDraft flag --useDraft and specific version number flag --version, receive a session ID for querying")
+	fmt.Println("    - Start a new session for knowledge map <kmid>, context ID <contextid>, useDraft flag --useDraft and specific version number flag --version, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
