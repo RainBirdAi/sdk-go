@@ -22,8 +22,8 @@ func usage() {
 	fmt.Println("    - Make a query against <session>, receive question or answers")
 	fmt.Printf("  %s response <session> <subject> <relationship> <object> <certainty>\n", os.Args[0])
 	fmt.Println("    - Response to pending question in <session>")
-	fmt.Printf("  %s start <kmid> --contextid --useDraft --version\n", os.Args[0])
-	fmt.Println("    - Start a new session for knowledge map <kmid>, context ID flag --contextid, useDraft flag --useDraft and specific version number flag --version, receive a session ID for querying")
+	fmt.Printf("  %s start <kmid> <contextid> --useDraft --version\n", os.Args[0])
+	fmt.Println("    - Start a new session for knowledge map <kmid>, context ID  <contextid>, useDraft flag --useDraft and specific version number flag --version, receive a session ID for querying")
 	fmt.Printf("  %s undo <session>\n", os.Args[0])
 	fmt.Println("    - Roll back <session> by one interaction")
 	fmt.Printf("  %s version\n", os.Args[0])
@@ -102,23 +102,19 @@ func main() {
 			os.Args[6],
 		)
 	case "start":
-		var contextID = gnuflag.String("context", "", "Context id to be used")
 		var useDraft = gnuflag.Bool("useDraft", false, "Use draft version")
 		var version = gnuflag.Int("version", -1, "Use a specific version")
 		gnuflag.Parse(true)
 
-		if contextID != nil && *contextID == "" {
-			contextID = nil
-		}
 		if version != nil && *version == -1 {
 			version = nil
 		}
 
-		if len(os.Args) < 3 {
+		if len(os.Args) < 4 {
 			usage()
 			os.Exit(0)
 		}
-		err = cmdStart(os.Args[2], contextID, useDraft, version)
+		err = cmdStart(os.Args[2], os.Args[3], useDraft, version)
 	case "undo":
 		if len(os.Args) != 3 {
 			usage()
@@ -259,7 +255,7 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 	return nil
 }
 
-func cmdStart(kmID string, contextID *string, useDraft *bool, version *int) error {
+func cmdStart(kmID string, contextID string, useDraft *bool, version *int) error {
 	if client.APIKey == "" {
 		return errors.New("missing required environment variable RB_API_KEY")
 	}

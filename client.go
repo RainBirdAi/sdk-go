@@ -51,6 +51,10 @@ type KnowledgeMap struct {
 	VersionStatus  string     `json:"versionStatus,omitempty"`
 }
 
+// NoContext is the default way to interact with the engine; without defining a
+// context in which to work
+const NoContext string = ""
+
 // String makes *Evidence satisfy fmt.Stringer
 func (s *KnowledgeMap) String() string {
 	str := fmt.Sprintf(
@@ -108,7 +112,7 @@ func (c *Client) HTTP() *http.Client {
 }
 
 // NewSession creates a new engine interaction session
-func (c *Client) NewSession(kmID string, contextID *string, useDraft *bool, version *int) (*Session, error) {
+func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, version *int) (*Session, error) {
 	if c.APIKey == "" {
 		return nil, ErrClientMissingAPIKey
 	}
@@ -120,8 +124,8 @@ func (c *Client) NewSession(kmID string, contextID *string, useDraft *bool, vers
 	}
 
 	url := c.EnvironmentURL + "/start/" + kmID
-	if contextID != nil {
-		url += "?contextid=" + *contextID
+	if contextID != NoContext {
+		url += "?contextid=" + contextID
 	}
 	if useDraft != nil && *useDraft {
 		url += "?useDraft=true"

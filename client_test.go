@@ -54,7 +54,7 @@ func TestClientNewSessionValidation(t *testing.T) {
 		tc := tc // Capture
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
-			result, err := tc.client.NewSession(tc.kmid, nil, nil, nil)
+			result, err := tc.client.NewSession(tc.kmid, "", nil, nil)
 			assert.Nil(t, result)
 			assert.Equal(t, tc.expectErr, err)
 		})
@@ -67,7 +67,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 		apiKey      string
 		keyEncoded  string
 		kmid        string
-		contextID   *string
+		contextID   string
 		engine      *string
 		useDraft    *bool
 		version     *int
@@ -109,7 +109,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
 			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
 			kmid:        "12345678-1234-1234-1234567890ab",
-			contextID:   stringPtr("foo"),
+			contextID:   "foo",
 
 			expectCallURI: "/start/12345678-1234-1234-1234567890ab?contextid=foo",
 			returnBody:    stringPtr(`{"id":"success-id"}`),
