@@ -137,7 +137,7 @@ func TestSessionInject(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			session, err := client.NewSession("kmid", "")
+			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
 			err = session.Inject(tc.facts)
@@ -322,7 +322,7 @@ func TestSessionQuery(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			session, err := client.NewSession("kmid", "")
+			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
 			question, answers, err := session.Query(tc.sub, tc.rel, tc.obj)
@@ -583,7 +583,7 @@ func TestSessionResponse(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			session, err := client.NewSession("kmid", "")
+			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
 			question, answers, err := session.Response(tc.answers)
@@ -752,7 +752,7 @@ func TestSessionUndo(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			session, err := client.NewSession("kmid", "")
+			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
 			question, answers, err := session.Undo()

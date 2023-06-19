@@ -14,6 +14,8 @@ import (
 )
 
 func stringPtr(s string) *string { return &s }
+func intPtr(s int) *int          { return &s }
+func boolPtr(s bool) *bool       { return &s }
 
 func TestClientNewSessionValidation(t *testing.T) {
 	testCases := []struct {
@@ -52,7 +54,7 @@ func TestClientNewSessionValidation(t *testing.T) {
 		tc := tc // Capture
 		t.Run(tc.description, func(t *testing.T) {
 			t.Parallel()
-			result, err := tc.client.NewSession(tc.kmid, "")
+			result, err := tc.client.NewSession(tc.kmid, "", nil, nil)
 			assert.Nil(t, result)
 			assert.Equal(t, tc.expectErr, err)
 		})
@@ -67,6 +69,8 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 		kmid        string
 		contextID   string
 		engine      *string
+		useDraft    *bool
+		version     *int
 
 		expectCallURI string
 		returnBody    *string
@@ -158,6 +162,36 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			expectID:    "",
 			expectErr:   errors.New("API returned no error but no ID either"),
 		},
+		{
+			description: "Success with useDraft",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			useDraft:    boolPtr(true),
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab?useDraft=true",
+			returnBody:    stringPtr(`{"id":"success-id"}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "success-id",
+			expectErr:   nil,
+		},
+		{
+			description: "Success with version",
+			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
+			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
+			kmid:        "12345678-1234-1234-1234567890ab",
+			version:     intPtr(1),
+
+			expectCallURI: "/start/12345678-1234-1234-1234567890ab?version=1",
+			returnBody:    stringPtr(`{"id":"success-id"}`),
+			returnCode:    http.StatusOK,
+
+			expectCalls: 1,
+			expectID:    "success-id",
+			expectErr:   nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -201,7 +235,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 				client.Engine = *tc.engine
 			}
 
-			result, err := client.NewSession(tc.kmid, tc.contextID)
+			result, err := client.NewSession(tc.kmid, tc.contextID, tc.useDraft, tc.version)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectCalls, calls)
 			if tc.expectID != "" {

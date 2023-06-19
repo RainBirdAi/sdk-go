@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -111,7 +112,7 @@ func (c *Client) HTTP() *http.Client {
 }
 
 // NewSession creates a new engine interaction session
-func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
+func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, version *int) (*Session, error) {
 	if c.APIKey == "" {
 		return nil, ErrClientMissingAPIKey
 	}
@@ -125,6 +126,13 @@ func (c *Client) NewSession(kmID string, contextID string) (*Session, error) {
 	url := c.EnvironmentURL + "/start/" + kmID
 	if contextID != NoContext {
 		url += "?contextid=" + contextID
+	}
+	if useDraft != nil && *useDraft {
+		url += "?useDraft=true"
+	}
+	if version != nil {
+		versionStr := strconv.Itoa(*version)
+		url += "?version=" + versionStr
 	}
 
 	req, err := http.NewRequest(
