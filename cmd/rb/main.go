@@ -235,7 +235,7 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 		return err
 	}
 
-	question, answers, err := session.Response([]sdk.QAnswer{{
+	questions, answers, err := session.Response([]sdk.QAnswer{{
 		Subject:      sub,
 		Relationship: rel,
 		Object:       obj,
@@ -243,14 +243,16 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 	}})
 	if err != nil {
 		return err
-	} else if question != nil {
-		fmt.Printf("QUESTION: %s\n", question)
+	} else if questions != nil {
+		fmt.Println("QUESTIONS:")
+		for _, q := range questions {
+			fmt.Printf("  %s\n", &q)
+		}
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
 		for _, a := range *answers {
-			fmt.Printf("  %s", &a)
+			fmt.Printf("  %s\n", &a)
 		}
-		fmt.Println("")
 	}
 	return nil
 }

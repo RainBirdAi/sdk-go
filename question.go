@@ -39,7 +39,7 @@ func (q *Question) String() string {
 	return fmt.Sprintf("%s (%s - %s - %s)", q.Prompt, sub, q.Relationship, obj)
 }
 
-// toString handles the casting of an object and can return early
+// objectStr handles the casting of an object and can return early
 func objectStr(q *Question) string {
 	if q.Object == nil {
 		return "?"
