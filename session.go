@@ -126,7 +126,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub, rel string, obj interface{}) ([]Question, *[]Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}) ([]Question, []Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
@@ -183,7 +183,7 @@ func (s *Session) Query(sub, rel string, obj interface{}) ([]Question, *[]Answer
 	var body struct {
 		Error    string
 		Question []Question
-		Result   *[]Answer
+		Result   []Answer
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *Session) Query(sub, rel string, obj interface{}) ([]Question, *[]Answer
 
 // Response submits a user response to the engine, and must be a response to
 // a Question the engine has asked.
-func (s *Session) Response(answers []QAnswer) ([]Question, *[]Answer, error) {
+func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 	payloadS := struct {
 		Answers []QAnswer `json:"answers"`
 	}{
@@ -245,7 +245,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, *[]Answer, error) {
 		Error          string     `json:"error"`
 		Question       *Question  `json:"questions"`
 		ExtraQuestions []Question `json:"extraQuestions"`
-		Result         *[]Answer  `json:"result"`
+		Result         []Answer   `json:"result"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
@@ -263,7 +263,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, *[]Answer, error) {
 
 // Undo steps the engine back in the case of a mistake, for example if a
 // Response has been given in error.
-func (s *Session) Undo() (*Question, *[]Answer, error) {
+func (s *Session) Undo() (*Question, []Answer, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
 		s.client.EnvironmentURL+"/"+s.ID+"/undo",
@@ -301,7 +301,7 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	var body struct {
 		Error    string
 		Question *Question
-		Result   *[]Answer
+		Result   []Answer
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
