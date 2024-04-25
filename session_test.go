@@ -417,54 +417,6 @@ func TestSessionResponse(t *testing.T) {
 			expectErr:     nil,
 		},
 		{
-			description: "Simple response that returns a question (alt engine)",
-			answers: []QAnswer{
-				{
-					Subject:      "John",
-					Relationship: "Speaks",
-					Object:       "English",
-					CF:           "100",
-				},
-			},
-
-			expectCalls:  2,
-			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode: http.StatusOK,
-			responseBody: `{
-				"question": {
-					"subject":"John",
-					"dataType":"string",
-					"relationship":"lives in",
-					"type":"Second Form Object",
-					"plural":false,
-					"allowCF":true,
-					"allowUnknown":false,
-					"canAdd":true,
-					"prompt":"Where does John live?",
-					"knownAnswers":[]
-				}
-			}`,
-
-			expectQuestions: []Question{
-				{
-					AllowCF:      true,
-					AllowUnknown: false,
-					CanAdd:       true,
-					Concepts:     nil,
-					DataType:     "string",
-					KnownAnswers: []KnownAnswer{},
-					Plural:       false,
-					Prompt:       "Where does John live?",
-					Relationship: "lives in",
-					Subject:      "John",
-					Object:       interface{}(nil),
-					Type:         "Second Form Object",
-				},
-			},
-			expectAnswers: nil,
-			expectErr:     nil,
-		},
-		{
 			description: "Bad request",
 			answers: []QAnswer{
 				{
