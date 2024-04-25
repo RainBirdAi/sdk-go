@@ -14,12 +14,9 @@ import (
 )
 
 func TestSessionInject(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		facts       []InjectFact
-		engine      *string
 
 		responseCode int
 		expectCalls  int64
@@ -37,7 +34,6 @@ func TestSessionInject(t *testing.T) {
 		{
 			description:  "Specific engine",
 			facts:        []InjectFact{},
-			engine:       stringPtr("alternate"),
 			responseCode: http.StatusOK,
 			expectCalls:  2,
 			expectBody:   "[]",
@@ -107,13 +103,6 @@ func TestSessionInject(t *testing.T) {
 						)
 						assert.Equal(t, "/success-id/inject", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
 						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -145,14 +134,11 @@ func TestSessionInject(t *testing.T) {
 }
 
 func TestSessionQuery(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		sub         string
 		rel         string
 		obj         string
-		engine      *string
 
 		responseCode int
 		responseBody string
@@ -160,7 +146,7 @@ func TestSessionQuery(t *testing.T) {
 		expectBody   string
 
 		expectQuestion *Question
-		expectAnswers  *[]Answer
+		expectAnswers  []Answer
 		expectErr      error
 	}{
 		{
@@ -192,7 +178,7 @@ func TestSessionQuery(t *testing.T) {
 			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
-			expectAnswers: &[]Answer{
+			expectAnswers: []Answer{
 				{
 					Subject:      "John",
 					Relationship: "lives in",
@@ -208,7 +194,6 @@ func TestSessionQuery(t *testing.T) {
 			sub:         "John",
 			rel:         "lives in",
 			obj:         "",
-			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -224,7 +209,7 @@ func TestSessionQuery(t *testing.T) {
 			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
-			expectAnswers: &[]Answer{
+			expectAnswers: []Answer{
 				{
 					Subject:      "John",
 					Relationship: "lives in",
@@ -288,13 +273,6 @@ func TestSessionQuery(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Accept"))
 						assert.Equal(t, "/success-id/query", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
 						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -329,12 +307,9 @@ func TestSessionQuery(t *testing.T) {
 }
 
 func TestSessionResponse(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		answers     []QAnswer
-		engine      *string
 
 		expectCalls  int64
 		expectBody   string
@@ -342,7 +317,7 @@ func TestSessionResponse(t *testing.T) {
 		responseBody string
 
 		expectQuestion []Question
-		expectAnswers  *[]Answer
+		expectAnswers  []Answer
 		expectErr      error
 	}{
 		{
@@ -452,7 +427,6 @@ func TestSessionResponse(t *testing.T) {
 					CF:           "100",
 				},
 			},
-			engine: stringPtr("alternate"),
 
 			expectCalls:  2,
 			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
@@ -552,13 +526,6 @@ func TestSessionResponse(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/response", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
 						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -593,17 +560,14 @@ func TestSessionResponse(t *testing.T) {
 }
 
 func TestSessionUndo(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
-		engine      *string
 
 		responseCode int
 		responseBody string
 
 		expectQuestion *Question
-		expectAnswers  *[]Answer
+		expectAnswers  []Answer
 		expectErr      error
 	}{
 		{
@@ -643,7 +607,6 @@ func TestSessionUndo(t *testing.T) {
 		},
 		{
 			description: "Success back to question (alt engine)",
-			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -718,13 +681,6 @@ func TestSessionUndo(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/undo", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
 						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
