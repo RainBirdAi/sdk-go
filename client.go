@@ -15,9 +15,6 @@ import (
 type Client struct {
 	// APIKey is the user's authentication for the session. Required.
 	APIKey string
-	// Engine allows interaction to be with explicit engines, especially
-	// experimental ones. Advanced users only. Optional.
-	Engine string
 	// EnvironmentURL is the URL of the API to use. This is most commonly
 	// EnvCommunity. Required.
 	EnvironmentURL string
@@ -146,9 +143,6 @@ func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, versi
 
 	req.SetBasicAuth(c.APIKey, "")
 	req.Header.Set("Accept", "application/json")
-	if c.Engine != "" {
-		req.Header.Set("x-rainbird-engine", c.Engine)
-	}
 
 	resp, err := c.HTTP().Do(req)
 	if err != nil {

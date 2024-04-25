@@ -3,7 +3,7 @@ package sdk
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -115,7 +115,7 @@ func TestSessionInject(t *testing.T) {
 							)
 						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -132,9 +132,6 @@ func TestSessionInject(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
@@ -299,7 +296,7 @@ func TestSessionQuery(t *testing.T) {
 							)
 						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -317,9 +314,6 @@ func TestSessionQuery(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
@@ -347,7 +341,7 @@ func TestSessionResponse(t *testing.T) {
 		responseCode int
 		responseBody string
 
-		expectQuestion *Question
+		expectQuestion []Question
 		expectAnswers  *[]Answer
 		expectErr      error
 	}{
@@ -380,19 +374,21 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -427,19 +423,21 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       "12",
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       "12",
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -474,19 +472,21 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -560,7 +560,7 @@ func TestSessionResponse(t *testing.T) {
 							)
 						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -578,9 +578,6 @@ func TestSessionResponse(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
@@ -729,7 +726,7 @@ func TestSessionUndo(t *testing.T) {
 							)
 						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, "{}", string(body))
 
@@ -747,9 +744,6 @@ func TestSessionUndo(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)

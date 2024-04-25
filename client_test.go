@@ -231,9 +231,6 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
-			}
 
 			result, err := client.NewSession(tc.kmid, tc.contextID, tc.useDraft, tc.version)
 			assert.Equal(t, tc.expectErr, err)
@@ -562,10 +559,6 @@ func TestEvidence(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			evidence, err := client.Evidence(sessionID, factID, nil)
@@ -962,10 +955,6 @@ func TestInteractionLog(t *testing.T) {
 				HTTPClient:     srv.Client(),
 			}
 
-			if tc.engine != nil {
-				client.Engine = *tc.engine
-			}
-
 			interactionLog, err := client.Interactions(sessionID, nil)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectInteractionLog, interactionLog)
@@ -1041,10 +1030,6 @@ func TestSessionKmVersion(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			km, err := client.KnowledgeMapVersion(sessionID)
@@ -1282,10 +1267,6 @@ func TestSessionFacts(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			facts, err := client.SessionFacts(sessionID)
