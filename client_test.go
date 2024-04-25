@@ -68,7 +68,6 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 		keyEncoded  string
 		kmid        string
 		contextID   string
-		engine      *string
 		useDraft    *bool
 		version     *int
 
@@ -148,21 +147,6 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 			expectErr:   errors.New("API returned no error but no ID either"),
 		},
 		{
-			description: "Specific engine",
-			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
-			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
-			kmid:        "12345678-1234-1234-1234567890ab",
-			engine:      stringPtr("alternateengine"),
-
-			expectCallURI: "/start/12345678-1234-1234-1234567890ab",
-			returnBody:    stringPtr(`{}`),
-			returnCode:    http.StatusOK,
-
-			expectCalls: 1,
-			expectID:    "",
-			expectErr:   errors.New("API returned no error but no ID either"),
-		},
-		{
 			description: "Success with useDraft",
 			apiKey:      "abcdefgh-abcd-abcd-abcdefghijkl",
 			keyEncoded:  "Basic YWJjZGVmZ2gtYWJjZC1hYmNkLWFiY2RlZmdoaWprbDo=",
@@ -208,13 +192,6 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 					assert.Equal(t, http.MethodGet, r.Method)
 					assert.Equal(t, r.Header.Get("Authorization"), tc.keyEncoded)
 					assert.Equal(t, r.Header.Get("Accept"), "application/json")
-					if tc.engine != nil {
-						assert.Equal(
-							t,
-							*tc.engine,
-							r.Header.Get("x-rainbird-engine"),
-						)
-					}
 
 					w.Header().Add("Content-Type", "application/json")
 					w.WriteHeader(tc.returnCode)
@@ -354,7 +331,6 @@ func TestEvidence(t *testing.T) {
 	testCases := []struct {
 		description    string
 		kmid           string
-		engine         *string
 		responseBody   *string
 		responseCode   int
 		expectEvidence *Evidence
@@ -576,7 +552,6 @@ func TestInteractionLog(t *testing.T) {
 	testCases := []struct {
 		description          string
 		kmid                 string
-		engine               *string
 		responseBody         *string
 		responseCode         int
 		expectInteractionLog []InteractionEvent
@@ -969,7 +944,6 @@ func TestSessionKmVersion(t *testing.T) {
 	testCases := []struct {
 		description  string
 		kmid         string
-		engine       *string
 		responseBody *string
 		responseCode int
 		expectKm     *KnowledgeMap
@@ -1046,7 +1020,6 @@ func TestSessionFacts(t *testing.T) {
 	testCases := []struct {
 		description  string
 		kmid         string
-		engine       *string
 		responseBody *string
 		responseCode int
 		expectFacts  *Facts
