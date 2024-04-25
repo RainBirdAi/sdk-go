@@ -316,9 +316,9 @@ func TestSessionResponse(t *testing.T) {
 		responseCode int
 		responseBody string
 
-		expectQuestion []Question
-		expectAnswers  []Answer
-		expectErr      error
+		expectQuestions []Question
+		expectAnswers   []Answer
+		expectErr       error
 	}{
 		{
 			description: "Simple response that returns a question",
@@ -348,8 +348,7 @@ func TestSessionResponse(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
-
-			expectQuestion: []Question{
+			expectQuestions: []Question{
 				{
 					AllowCF:      true,
 					AllowUnknown: false,
@@ -398,7 +397,7 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: []Question{
+			expectQuestions: []Question{
 				{
 					AllowCF:      true,
 					AllowUnknown: false,
@@ -446,7 +445,7 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: []Question{
+			expectQuestions: []Question{
 				{
 					AllowCF:      true,
 					AllowUnknown: false,
@@ -476,13 +475,13 @@ func TestSessionResponse(t *testing.T) {
 				},
 			},
 
-			expectCalls:    2,
-			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode:   http.StatusBadRequest,
-			responseBody:   "Foo bar baz",
-			expectQuestion: nil,
-			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+			expectCalls:     2,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:    http.StatusBadRequest,
+			responseBody:    "Foo bar baz",
+			expectQuestions: nil,
+			expectAnswers:   nil,
+			expectErr:       errors.New("API returned error 400: Foo bar baz"),
 		},
 		{
 			description: "Internal server error",
@@ -495,13 +494,13 @@ func TestSessionResponse(t *testing.T) {
 				},
 			},
 
-			expectCalls:    2,
-			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode:   http.StatusInternalServerError,
-			responseBody:   "Foo bar baz",
-			expectQuestion: nil,
-			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+			expectCalls:     2,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:    http.StatusInternalServerError,
+			responseBody:    "Foo bar baz",
+			expectQuestions: nil,
+			expectAnswers:   nil,
+			expectErr:       errors.New("API returned error 500: Foo bar baz"),
 		},
 	}
 
@@ -551,7 +550,7 @@ func TestSessionResponse(t *testing.T) {
 			require.Nil(t, err)
 
 			question, answers, err := session.Response(tc.answers)
-			assert.Equal(t, tc.expectQuestion, question)
+			assert.Equal(t, tc.expectQuestions, question)
 			assert.Equal(t, tc.expectAnswers, answers)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectCalls, calls)

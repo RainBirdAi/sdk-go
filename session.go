@@ -233,7 +233,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 
 	var body struct {
 		Error          string     `json:"error"`
-		Question       *Question  `json:"questions"`
+		Question       *Question  `json:"question"`
 		ExtraQuestions []Question `json:"extraQuestions"`
 		Result         []Answer   `json:"result"`
 	}
