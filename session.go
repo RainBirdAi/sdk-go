@@ -253,7 +253,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 
 // Undo steps the engine back in the case of a mistake, for example if a
 // Response has been given in error.
-func (s *Session) Undo() (*Question, []Answer, error) {
+func (s *Session) Undo() ([]Question, []Answer, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
 		s.client.EnvironmentURL+"/"+s.ID+"/undo",
@@ -286,14 +286,21 @@ func (s *Session) Undo() (*Question, []Answer, error) {
 	}
 
 	var body struct {
-		Error    string
-		Question *Question
-		Result   []Answer
+		Error          string     `json:"error"`
+		Question       *Question  `json:"question"`
+		ExtraQuestions []Question `json:"extraQuestions"`
+		Result         []Answer   `json:"result"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return body.Question, body.Result, nil
+	// Ensure the first question is placed at the beginning of the questions slice
+	questions := []Question{}
+	if body.Question != nil {
+		questions = append(questions, *body.Question)
+	}
+	questions = append(questions, body.ExtraQuestions...)
+	return questions, body.Result, nil
 }

@@ -590,7 +590,7 @@ func TestSessionUndo(t *testing.T) {
 		responseCode int
 		responseBody string
 
-		expectQuestion *Question
+		expectQuestion []Question
 		expectAnswers  []Answer
 		expectErr      error
 	}{
@@ -612,19 +612,21 @@ func TestSessionUndo(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -647,19 +649,21 @@ func TestSessionUndo(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
