@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,13 +27,17 @@ type InjectFact struct {
 	CertFactor   *int        `json:"certainty,omitempty"`
 }
 
-// CertaintyFactor is a common interface to handle both cf and certainty from responses
-func (i *InjectFact) CertaintyFactor() int {
-	if i.CertFactor != nil {
-		return *i.CertFactor
+// CertaintyFactor returns the certainty factor from QAnswer or InjectFact
+func CertaintyFactor(cf string, cfPointer *int) int {
+	if cfPointer != nil {
+		return *cfPointer
 	}
-	toInt, _ := strconv.Atoi(i.Certainty)
-	return toInt
+	cfValue, _ := strconv.Atoi(cf)
+	return cfValue
+}
+
+func (i *InjectFact) CertaintyFactor() int {
+	return CertaintyFactor(i.Certainty, i.CertFactor)
 }
 
 // String makes *InjectFact satisfy fmt.Stringer
@@ -59,13 +63,8 @@ type QAnswer struct {
 	Answer       string      `json:"answer,omitempty"`
 }
 
-// CertaintyFactor is a common interface to handle both cf and certainty from responses
 func (q *QAnswer) CertaintyFactor() int {
-	if q.Certainty != nil {
-		return *q.Certainty
-	}
-	toInt, _ := strconv.Atoi(q.CF)
-	return toInt
+	return CertaintyFactor(q.CF, q.Certainty)
 }
 
 // String makes *QAnswer satisfy fmt.Stringer
@@ -106,9 +105,6 @@ func (s *Session) Inject(facts []InjectFact) error {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if s.client.Engine != "" {
-		req.Header.Set("x-rainbird-engine", s.client.Engine)
-	}
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
@@ -126,7 +122,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}) (*Question, []Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
@@ -156,9 +152,6 @@ func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer,
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	if s.client.Engine != "" {
-		req.Header.Set("x-rainbird-engine", s.client.Engine)
-	}
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
@@ -168,7 +161,7 @@ func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer,
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -183,7 +176,7 @@ func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer,
 	var body struct {
 		Error    string
 		Question *Question
-		Result   *[]Answer
+		Result   []Answer
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
@@ -195,7 +188,7 @@ func (s *Session) Query(sub, rel string, obj interface{}) (*Question, *[]Answer,
 
 // Response submits a user response to the engine, and must be a response to
 // a Question the engine has asked.
-func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
+func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 	payloadS := struct {
 		Answers []QAnswer `json:"answers"`
 	}{
@@ -217,9 +210,6 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	if s.client.Engine != "" {
-		req.Header.Set("x-rainbird-engine", s.client.Engine)
-	}
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
@@ -229,7 +219,7 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -242,21 +232,28 @@ func (s *Session) Response(answers []QAnswer) (*Question, *[]Answer, error) {
 	}
 
 	var body struct {
-		Error    string
-		Question *Question
-		Result   *[]Answer
+		Error          string     `json:"error"`
+		Question       *Question  `json:"question"`
+		ExtraQuestions []Question `json:"extraQuestions"`
+		Result         []Answer   `json:"result"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return body.Question, body.Result, nil
+	// Ensure the first question is placed at the beginning of the questions slice
+	questions := []Question{}
+	if body.Question != nil {
+		questions = append(questions, *body.Question)
+	}
+	questions = append(questions, body.ExtraQuestions...)
+	return questions, body.Result, nil
 }
 
 // Undo steps the engine back in the case of a mistake, for example if a
 // Response has been given in error.
-func (s *Session) Undo() (*Question, *[]Answer, error) {
+func (s *Session) Undo() ([]Question, []Answer, error) {
 	req, err := http.NewRequest(
 		http.MethodPost,
 		s.client.EnvironmentURL+"/"+s.ID+"/undo",
@@ -267,9 +264,6 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if s.client.Engine != "" {
-		req.Header.Set("x-rainbird-engine", s.client.Engine)
-	}
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
@@ -279,7 +273,7 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -292,14 +286,21 @@ func (s *Session) Undo() (*Question, *[]Answer, error) {
 	}
 
 	var body struct {
-		Error    string
-		Question *Question
-		Result   *[]Answer
+		Error          string     `json:"error"`
+		Question       *Question  `json:"question"`
+		ExtraQuestions []Question `json:"extraQuestions"`
+		Result         []Answer   `json:"result"`
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return body.Question, body.Result, nil
+	// Ensure the first question is placed at the beginning of the questions slice
+	questions := []Question{}
+	if body.Question != nil {
+		questions = append(questions, *body.Question)
+	}
+	questions = append(questions, body.ExtraQuestions...)
+	return questions, body.Result, nil
 }

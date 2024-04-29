@@ -45,7 +45,6 @@ func usage() {
 
 var client = sdk.Client{
 	APIKey:         os.Getenv("RB_API_KEY"),
-	Engine:         os.Getenv("RB_ENGINE"),
 	EnvironmentURL: sdk.EnvCommunity,
 }
 
@@ -221,7 +220,7 @@ func cmdQuery(sessionID, sub, rel, obj string) error {
 		fmt.Printf("QUESTION: %s\n", question)
 	} else if answers != nil {
 		fmt.Println("ANSWERS:")
-		for _, a := range *answers {
+		for _, a := range answers {
 			fmt.Printf("  %s", &a)
 		}
 		fmt.Println("")
@@ -235,23 +234,27 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 		return err
 	}
 
-	question, answers, err := session.Response([]sdk.QAnswer{{
+	questions, answers, err := session.Response([]sdk.QAnswer{{
 		Subject:      sub,
 		Relationship: rel,
 		Object:       obj,
 		CF:           cf,
 	}})
+
 	if err != nil {
 		return err
-	} else if question != nil {
-		fmt.Printf("QUESTION: %s\n", question)
-	} else if answers != nil {
-		fmt.Println("ANSWERS:")
-		for _, a := range *answers {
-			fmt.Printf("  %s", &a)
-		}
-		fmt.Println("")
 	}
+
+	fmt.Println("QUESTIONS:")
+	for _, q := range questions {
+		fmt.Printf("  %s\n", &q)
+	}
+
+	fmt.Println("ANSWERS:")
+	for _, a := range answers {
+		fmt.Printf("  %s\n", &a)
+	}
+
 	return nil
 }
 
@@ -275,17 +278,20 @@ func cmdUndo(sessionID string) error {
 		return err
 	}
 
-	question, answers, err := session.Undo()
+	questions, answers, err := session.Undo()
+
 	if err != nil {
 		return err
-	} else if question != nil {
-		fmt.Printf("QUESTION: %s\n", question)
-	} else if answers != nil {
-		fmt.Println("ANSWERS:")
-		for _, a := range *answers {
-			fmt.Printf("*  %s\n", &a)
-		}
-		fmt.Println("")
+	}
+
+	fmt.Println("QUESTIONS:")
+	for _, q := range questions {
+		fmt.Printf("*  %s\n", &q)
+	}
+
+	fmt.Println("ANSWERS:")
+	for _, a := range answers {
+		fmt.Printf("*  %s\n", &a)
 	}
 	return nil
 }

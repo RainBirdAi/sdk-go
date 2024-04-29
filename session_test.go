@@ -3,7 +3,7 @@ package sdk
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -14,12 +14,9 @@ import (
 )
 
 func TestSessionInject(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		facts       []InjectFact
-		engine      *string
 
 		responseCode int
 		expectCalls  int64
@@ -37,7 +34,6 @@ func TestSessionInject(t *testing.T) {
 		{
 			description:  "Specific engine",
 			facts:        []InjectFact{},
-			engine:       stringPtr("alternate"),
 			responseCode: http.StatusOK,
 			expectCalls:  2,
 			expectBody:   "[]",
@@ -107,15 +103,8 @@ func TestSessionInject(t *testing.T) {
 						)
 						assert.Equal(t, "/success-id/inject", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -133,9 +122,6 @@ func TestSessionInject(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
-			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
@@ -148,14 +134,11 @@ func TestSessionInject(t *testing.T) {
 }
 
 func TestSessionQuery(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		sub         string
 		rel         string
 		obj         string
-		engine      *string
 
 		responseCode int
 		responseBody string
@@ -163,7 +146,7 @@ func TestSessionQuery(t *testing.T) {
 		expectBody   string
 
 		expectQuestion *Question
-		expectAnswers  *[]Answer
+		expectAnswers  []Answer
 		expectErr      error
 	}{
 		{
@@ -195,7 +178,7 @@ func TestSessionQuery(t *testing.T) {
 			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
-			expectAnswers: &[]Answer{
+			expectAnswers: []Answer{
 				{
 					Subject:      "John",
 					Relationship: "lives in",
@@ -211,7 +194,6 @@ func TestSessionQuery(t *testing.T) {
 			sub:         "John",
 			rel:         "lives in",
 			obj:         "",
-			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -227,7 +209,7 @@ func TestSessionQuery(t *testing.T) {
 			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
 			expectQuestion: nil,
-			expectAnswers: &[]Answer{
+			expectAnswers: []Answer{
 				{
 					Subject:      "John",
 					Relationship: "lives in",
@@ -291,15 +273,8 @@ func TestSessionQuery(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Accept"))
 						assert.Equal(t, "/success-id/query", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -318,9 +293,6 @@ func TestSessionQuery(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
-			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
@@ -335,21 +307,18 @@ func TestSessionQuery(t *testing.T) {
 }
 
 func TestSessionResponse(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
 		answers     []QAnswer
-		engine      *string
 
 		expectCalls  int64
 		expectBody   string
 		responseCode int
 		responseBody string
 
-		expectQuestion *Question
-		expectAnswers  *[]Answer
-		expectErr      error
+		expectQuestions []Question
+		expectAnswers   []Answer
+		expectErr       error
 	}{
 		{
 			description: "Simple response that returns a question",
@@ -379,20 +348,94 @@ func TestSessionResponse(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
+			expectQuestions: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
+			},
+			expectAnswers: nil,
+			expectErr:     nil,
+		},
+		{
+			description: "Simple response that returns extra questions",
+			answers: []QAnswer{
+				{
+					Subject:      "John",
+					Relationship: "Speaks",
+					Object:       "English",
+					CF:           "100",
+				},
+			},
 
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectCalls:  2,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"question": {
+					"subject":"John",
+					"dataType":"string",
+					"relationship":"lives in",
+					"type":"Second Form Object",
+					"plural":false,
+					"allowCF":true,
+					"allowUnknown":false,
+					"canAdd":true,
+					"prompt":"Where does John live?",
+					"knownAnswers":[]
+				},
+				"extraQuestions": [{
+					"subject":"John",
+					"dataType":"string",
+					"relationship":"visits to",
+					"type":"Second Form Object",
+					"plural":false,
+					"allowCF":true,
+					"allowUnknown":false,
+					"canAdd":true,
+					"prompt":"Does John travel here a lot?",
+					"knownAnswers":[]
+				}]
+			}`,
+			expectQuestions: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Does John travel here a lot?",
+					Relationship: "visits to",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -427,66 +470,21 @@ func TestSessionResponse(t *testing.T) {
 				}
 			}`,
 
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       "12",
-				Type:         "Second Form Object",
-			},
-			expectAnswers: nil,
-			expectErr:     nil,
-		},
-		{
-			description: "Simple response that returns a question (alt engine)",
-			answers: []QAnswer{
+			expectQuestions: []Question{
 				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
 					Subject:      "John",
-					Relationship: "Speaks",
-					Object:       "English",
-					CF:           "100",
+					Object:       "12",
+					Type:         "Second Form Object",
 				},
-			},
-			engine: stringPtr("alternate"),
-
-			expectCalls:  2,
-			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode: http.StatusOK,
-			responseBody: `{
-				"question": {
-					"subject":"John",
-					"dataType":"string",
-					"relationship":"lives in",
-					"type":"Second Form Object",
-					"plural":false,
-					"allowCF":true,
-					"allowUnknown":false,
-					"canAdd":true,
-					"prompt":"Where does John live?",
-					"knownAnswers":[]
-				}
-			}`,
-
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -502,13 +500,13 @@ func TestSessionResponse(t *testing.T) {
 				},
 			},
 
-			expectCalls:    2,
-			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode:   http.StatusBadRequest,
-			responseBody:   "Foo bar baz",
-			expectQuestion: nil,
-			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+			expectCalls:     2,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:    http.StatusBadRequest,
+			responseBody:    "Foo bar baz",
+			expectQuestions: nil,
+			expectAnswers:   nil,
+			expectErr:       errors.New("API returned error 400: Foo bar baz"),
 		},
 		{
 			description: "Internal server error",
@@ -521,13 +519,13 @@ func TestSessionResponse(t *testing.T) {
 				},
 			},
 
-			expectCalls:    2,
-			expectBody:     `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
-			responseCode:   http.StatusInternalServerError,
-			responseBody:   "Foo bar baz",
-			expectQuestion: nil,
-			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+			expectCalls:     2,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			responseCode:    http.StatusInternalServerError,
+			responseBody:    "Foo bar baz",
+			expectQuestions: nil,
+			expectAnswers:   nil,
+			expectErr:       errors.New("API returned error 500: Foo bar baz"),
 		},
 	}
 
@@ -552,15 +550,8 @@ func TestSessionResponse(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/response", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, tc.expectBody, string(body))
 
@@ -579,15 +570,12 @@ func TestSessionResponse(t *testing.T) {
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
 			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
-			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
 			question, answers, err := session.Response(tc.answers)
-			assert.Equal(t, tc.expectQuestion, question)
+			assert.Equal(t, tc.expectQuestions, question)
 			assert.Equal(t, tc.expectAnswers, answers)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectCalls, calls)
@@ -596,17 +584,14 @@ func TestSessionResponse(t *testing.T) {
 }
 
 func TestSessionUndo(t *testing.T) {
-	stringPtr := func(s string) *string { return &s }
-
 	testCases := []struct {
 		description string
-		engine      *string
 
 		responseCode int
 		responseBody string
 
-		expectQuestion *Question
-		expectAnswers  *[]Answer
+		expectQuestion []Question
+		expectAnswers  []Answer
 		expectErr      error
 	}{
 		{
@@ -627,26 +612,27 @@ func TestSessionUndo(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
 		},
 		{
 			description: "Success back to question (alt engine)",
-			engine:      stringPtr("alternate"),
 
 			responseCode: http.StatusOK,
 			responseBody: `{
@@ -663,19 +649,21 @@ func TestSessionUndo(t *testing.T) {
 					"knownAnswers":[]
 				}
 			}`,
-			expectQuestion: &Question{
-				AllowCF:      true,
-				AllowUnknown: false,
-				CanAdd:       true,
-				Concepts:     nil,
-				DataType:     "string",
-				KnownAnswers: []KnownAnswer{},
-				Plural:       false,
-				Prompt:       "Where does John live?",
-				Relationship: "lives in",
-				Subject:      "John",
-				Object:       interface{}(nil),
-				Type:         "Second Form Object",
+			expectQuestion: []Question{
+				{
+					AllowCF:      true,
+					AllowUnknown: false,
+					CanAdd:       true,
+					Concepts:     nil,
+					DataType:     "string",
+					KnownAnswers: []KnownAnswer{},
+					Plural:       false,
+					Prompt:       "Where does John live?",
+					Relationship: "lives in",
+					Subject:      "John",
+					Object:       interface{}(nil),
+					Type:         "Second Form Object",
+				},
 			},
 			expectAnswers: nil,
 			expectErr:     nil,
@@ -721,15 +709,8 @@ func TestSessionUndo(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 						assert.Equal(t, "/success-id/undo", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
-						if tc.engine != nil {
-							assert.Equal(
-								t,
-								"alternate",
-								r.Header.Get("x-rainbird-engine"),
-							)
-						}
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
 						assert.Equal(t, "{}", string(body))
 
@@ -747,9 +728,6 @@ func TestSessionUndo(t *testing.T) {
 				APIKey:         "1234567890-1234-1234-1234-1234567890ab",
 				EnvironmentURL: srv.URL,
 				HTTPClient:     srv.Client(),
-			}
-			if tc.engine != nil {
-				client.Engine = *tc.engine
 			}
 
 			session, err := client.NewSession("kmid", "", nil, nil)
