@@ -240,19 +240,21 @@ func cmdResponse(sessionID, sub, rel, obj, cf string) error {
 		Object:       obj,
 		CF:           cf,
 	}})
+
 	if err != nil {
 		return err
-	} else if questions != nil {
-		fmt.Println("QUESTIONS:")
-		for _, q := range questions {
-			fmt.Printf("  %s\n", &q)
-		}
-	} else if answers != nil {
-		fmt.Println("ANSWERS:")
-		for _, a := range answers {
-			fmt.Printf("  %s\n", &a)
-		}
 	}
+
+	fmt.Println("QUESTIONS:")
+	for _, q := range questions {
+		fmt.Printf("  %s\n", &q)
+	}
+
+	fmt.Println("ANSWERS:")
+	for _, a := range answers {
+		fmt.Printf("  %s\n", &a)
+	}
+
 	return nil
 }
 
@@ -276,17 +278,20 @@ func cmdUndo(sessionID string) error {
 		return err
 	}
 
-	question, answers, err := session.Undo()
+	questions, answers, err := session.Undo()
+
 	if err != nil {
 		return err
-	} else if question != nil {
-		fmt.Printf("QUESTION: %s\n", question)
-	} else if answers != nil {
-		fmt.Println("ANSWERS:")
-		for _, a := range answers {
-			fmt.Printf("*  %s\n", &a)
-		}
-		fmt.Println("")
+	}
+
+	fmt.Println("QUESTIONS:")
+	for _, q := range questions {
+		fmt.Printf("*  %s\n", &q)
+	}
+
+	fmt.Println("ANSWERS:")
+	for _, a := range answers {
+		fmt.Printf("*  %s\n", &a)
 	}
 	return nil
 }
