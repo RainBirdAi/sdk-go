@@ -122,7 +122,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub, rel string, obj interface{}) (*Question, []Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}) ([]Question, []Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
@@ -174,16 +174,24 @@ func (s *Session) Query(sub, rel string, obj interface{}) (*Question, []Answer, 
 	}
 
 	var body struct {
-		Error    string
-		Question *Question
-		Result   []Answer
+		Error          string
+		Question       *Question  `json:"question"`
+		ExtraQuestions []Question `json:"extraQuestions"`
+		Result         []Answer
 	}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return body.Question, body.Result, nil
+	// Ensure the first question is placed at the beginning of the questions slice
+	questions := []Question{}
+	if body.Question != nil {
+		questions = append(questions, *body.Question)
+	}
+	questions = append(questions, body.ExtraQuestions...)
+
+	return questions, body.Result, nil
 }
 
 // Response submits a user response to the engine, and must be a response to

@@ -145,7 +145,7 @@ func TestSessionQuery(t *testing.T) {
 		expectCalls  int64
 		expectBody   string
 
-		expectQuestion *Question
+		expectQuestion []Question
 		expectAnswers  []Answer
 		expectErr      error
 	}{
@@ -177,38 +177,7 @@ func TestSessionQuery(t *testing.T) {
 			expectCalls: 2,
 			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
 
-			expectQuestion: nil,
-			expectAnswers: []Answer{
-				{
-					Subject:      "John",
-					Relationship: "lives in",
-					Object:       "England",
-					Certainty:    100,
-					FactID:       "thisisthefactid",
-				},
-			},
-			expectErr: nil,
-		},
-		{
-			description: "John - lives in - ? leading to answer (alt engine)",
-			sub:         "John",
-			rel:         "lives in",
-			obj:         "",
-
-			responseCode: http.StatusOK,
-			responseBody: `{
-				"result": [{
-					"certainty": 100,
-					"factID": "thisisthefactid",
-					"object": "England",
-					"relationship": "lives in",
-					"subject": "John"
-				}]
-			}`,
-			expectCalls: 2,
-			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
-
-			expectQuestion: nil,
+			expectQuestion: []Question{},
 			expectAnswers: []Answer{
 				{
 					Subject:      "John",
@@ -297,8 +266,8 @@ func TestSessionQuery(t *testing.T) {
 			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
-			question, answers, err := session.Query(tc.sub, tc.rel, tc.obj)
-			assert.Equal(t, tc.expectQuestion, question)
+			questions, answers, err := session.Query(tc.sub, tc.rel, tc.obj)
+			assert.Equal(t, tc.expectQuestion, questions)
 			assert.Equal(t, tc.expectAnswers, answers)
 			assert.Equal(t, tc.expectErr, err)
 			assert.Equal(t, tc.expectCalls, calls)
@@ -596,43 +565,6 @@ func TestSessionUndo(t *testing.T) {
 	}{
 		{
 			description: "Success back to question",
-
-			responseCode: http.StatusOK,
-			responseBody: `{
-				"question": {
-					"subject":"John",
-					"dataType":"string",
-					"relationship":"lives in",
-					"type":"Second Form Object",
-					"plural":false,
-					"allowCF":true,
-					"allowUnknown":false,
-					"canAdd":true,
-					"prompt":"Where does John live?",
-					"knownAnswers":[]
-				}
-			}`,
-			expectQuestion: []Question{
-				{
-					AllowCF:      true,
-					AllowUnknown: false,
-					CanAdd:       true,
-					Concepts:     nil,
-					DataType:     "string",
-					KnownAnswers: []KnownAnswer{},
-					Plural:       false,
-					Prompt:       "Where does John live?",
-					Relationship: "lives in",
-					Subject:      "John",
-					Object:       interface{}(nil),
-					Type:         "Second Form Object",
-				},
-			},
-			expectAnswers: nil,
-			expectErr:     nil,
-		},
-		{
-			description: "Success back to question (alt engine)",
 
 			responseCode: http.StatusOK,
 			responseBody: `{
