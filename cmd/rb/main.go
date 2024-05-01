@@ -213,17 +213,19 @@ func cmdQuery(sessionID, sub, rel, obj string) error {
 		obj = ""
 	}
 
-	question, answers, err := session.Query(sub, rel, obj)
+	questions, answers, err := session.Query(sub, rel, obj)
 	if err != nil {
 		return err
-	} else if question != nil {
-		fmt.Printf("QUESTION: %s\n", question)
-	} else if answers != nil {
-		fmt.Println("ANSWERS:")
-		for _, a := range answers {
-			fmt.Printf("  %s", &a)
-		}
-		fmt.Println("")
+	}
+
+	fmt.Println("QUESTIONS:")
+	for _, q := range questions {
+		fmt.Printf("  %s\n", &q)
+	}
+
+	fmt.Println("ANSWERS:")
+	for _, a := range answers {
+		fmt.Printf("  %s\n", &a)
 	}
 	return nil
 }
