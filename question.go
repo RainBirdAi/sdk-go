@@ -4,28 +4,39 @@ import "fmt"
 
 // QuestionConcept is how the engine expressed concepts when asking a Question
 type QuestionConcept struct {
-	ConceptType string
-	FSID        uint64
-	Name        interface{}
-	Type        string
-	Value       interface{}
+	ConceptType     string      `json:"conceptType,omitempty"`
+	Name            interface{} `json:"name,omitempty"`
+	Type            string      `json:"type,omitempty"`
+	Value           interface{} `json:"value,omitempty"`
+	InvalidResponse bool        `json:"invalidResponse,omitempty"`
+	FSID            uint64      `json:"fsid,omitempty"`
+}
+
+// KnownAnswer is a hint provided by the engine for information it already knows
+type KnownAnswer struct {
+	CF           float64     `json:"cf,omitempty"`
+	Object       interface{} `json:"object,omitempty"`
+	Relationship struct {
+		Name string `json:"name,omitempty"`
+	} `json:"relationship,omitempty"`
+	Subject string `json:"subject,omitempty"`
 }
 
 // Question is the structure of a request from the engine when asking for more
 // information from the user
 type Question struct {
-	AllowCF      bool
-	AllowUnknown bool
-	CanAdd       bool
-	Concepts     []QuestionConcept
-	DataType     string
-	KnownAnswers []KnownAnswer
-	Plural       bool
-	Prompt       string
-	Relationship string
-	Subject      string
-	Object       interface{}
-	Type         string
+	Subject      string            `json:"subject,omitempty"`
+	Object       interface{}       `json:"object,omitempty"`
+	DataType     string            `json:"dataType,omitempty"`
+	Relationship string            `json:"relationship,omitempty"`
+	Type         string            `json:"type,omitempty"`
+	Plural       bool              `json:"plural,omitempty"`
+	AllowCF      bool              `json:"allowCF,omitempty"`
+	AllowUnknown bool              `json:"allowUnknown,omitempty"`
+	CanAdd       bool              `json:"canAdd,omitempty"`
+	Prompt       string            `json:"prompt,omitempty"`
+	KnownAnswers []KnownAnswer     `json:"knownAnswers,omitempty"`
+	Concepts     []QuestionConcept `json:"concepts,omitempty"`
 }
 
 // String makes *Question satisfy fmt.Stringer
