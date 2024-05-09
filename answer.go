@@ -10,25 +10,15 @@ type MetaData struct {
 
 // Answer is data provided by the engine as a result/decision
 type Answer struct {
-	Certainty       uint64
-	FactID          string
-	Object          interface{}
-	ObjectMetadata  map[string][]MetaData
-	ObjectValue     interface{}
-	Relationship    string
-	Subject         string
-	SubjectMetadata map[string][]MetaData
-	SubjectValue    interface{}
-}
-
-// KnownAnswer is a hint provided by the engine for information it already knows
-type KnownAnswer struct {
-	CF           float64
-	Object       interface{}
-	Relationship struct {
-		Name string
-	}
-	Subject string
+	Subject         string                `json:"subject,omitempty"`
+	Object          interface{}           `json:"object,omitempty"`
+	Certainty       uint64                `json:"certainty,omitempty"`
+	FactID          string                `json:"factID,omitempty"`
+	Relationship    string                `json:"relationship,omitempty"`
+	SubjectMetadata map[string][]MetaData `json:"subjectMetadata,omitempty"`
+	SubjectValue    interface{}           `json:"subjectValue,omitempty"`
+	ObjectMetadata  map[string][]MetaData `json:"objectMetadata,omitempty"`
+	ObjectValue     interface{}           `json:"objectValue,omitempty"`
 }
 
 // String makes *Answer satisfy fmt.Stringer
