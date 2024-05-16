@@ -25,18 +25,20 @@ type KnownAnswer struct {
 // Question is the structure of a request from the engine when asking for more
 // information from the user
 type Question struct {
-	Subject      string            `json:"subject,omitempty"`
-	Object       interface{}       `json:"object,omitempty"`
-	DataType     string            `json:"dataType,omitempty"`
-	Relationship string            `json:"relationship,omitempty"`
-	Type         string            `json:"type,omitempty"`
-	Plural       bool              `json:"plural,omitempty"`
-	AllowCF      bool              `json:"allowCF,omitempty"`
-	AllowUnknown bool              `json:"allowUnknown,omitempty"`
-	CanAdd       bool              `json:"canAdd,omitempty"`
-	Prompt       string            `json:"prompt,omitempty"`
-	KnownAnswers []KnownAnswer     `json:"knownAnswers,omitempty"`
-	Concepts     []QuestionConcept `json:"concepts,omitempty"`
+	AllowCF        bool                  `json:"allowCF,omitempty"`
+	AllowUnknown   bool                  `json:"allowUnknown,omitempty"`
+	CanAdd         bool                  `json:"canAdd,omitempty"`
+	Concepts       []QuestionConcept     `json:"concepts,omitempty"`
+	DataType       string                `json:"dataType,omitempty"`
+	KnownAnswers   []KnownAnswer         `json:"knownAnswers,omitempty"`
+	Object         interface{}           `json:"object,omitempty"`
+	ObjectMetadata map[string][]MetaData `json:"objectMetadata,omitempty"`
+	ObjectType     string                `json:"objectType,omitempty"`
+	Plural         bool                  `json:"plural,omitempty"`
+	Prompt         string                `json:"prompt,omitempty"`
+	Relationship   string                `json:"relationship,omitempty"`
+	Subject        string                `json:"subject,omitempty"`
+	Type           string                `json:"type,omitempty"`
 }
 
 // String makes *Question satisfy fmt.Stringer
