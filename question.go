@@ -18,19 +18,19 @@ type KnownAnswer struct {
 	Object       interface{} `json:"object,omitempty"`
 	Relationship struct {
 		AllowCertainty     bool          `json:"allowCertainty,omitempty"`
-		AllowUnknown       bool          `json:"allowUnknown,omitempty"`
 		AllowCF            bool          `json:"allowCF,omitempty"`
+		AllowUnknown       bool          `json:"allowUnknown,omitempty"`
 		Askable            string        `json:"askable,omitempty"`
 		CanAdd             string        `json:"canAdd,omitempty"`
 		CanAddAttr         string        `json:"canAdd_attr,omitempty"`
 		FSID               uint64        `json:"fsid,omitempty"`
 		Metadata           interface{}   `json:"metadata,omitempty"`
-		SubjectDatasources []interface{} `json:"subjectDatasources,omitempty"`
 		Name               string        `json:"name,omitempty"`
 		Object             string        `json:"object,omitempty"`
 		ObjectType         string        `json:"objectType,omitempty"`
-		SubjectType        string        `json:"subjectType,omitempty"`
 		Plural             bool          `json:"plural,omitempty"`
+		SubjectDatasources []interface{} `json:"subjectDatasources,omitempty"`
+		SubjectType        string        `json:"subjectType,omitempty"`
 		Questions          struct {
 			EN struct {
 				SecondFormSubject string `json:"secondFormSubject,omitempty"`
