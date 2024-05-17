@@ -17,7 +17,26 @@ type KnownAnswer struct {
 	CF           float64     `json:"cf,omitempty"`
 	Object       interface{} `json:"object,omitempty"`
 	Relationship struct {
-		Name string `json:"name,omitempty"`
+		AllowCertainty     bool          `json:"allowCertainty,omitempty"`
+		AllowUnknown       bool          `json:"allowUnknown,omitempty"`
+		AllowCF            bool          `json:"allowCF,omitempty"`
+		Askable            string        `json:"askable,omitempty"`
+		CanAdd             string        `json:"canAdd,omitempty"`
+		CanAddAttr         string        `json:"canAdd_attr,omitempty"`
+		FSID               uint64        `json:"fsid,omitempty"`
+		Metadata           interface{}   `json:"metadata,omitempty"`
+		SubjectDatasources []interface{} `json:"subjectDatasources,omitempty"`
+		Name               string        `json:"name,omitempty"`
+		Object             string        `json:"object,omitempty"`
+		ObjectType         string        `json:"objectType,omitempty"`
+		SubjectType        string        `json:"subjectType,omitempty"`
+		Plural             bool          `json:"plural,omitempty"`
+		Questions          struct {
+			EN struct {
+				SecondFormSubject string `json:"secondFormSubject,omitempty"`
+			} `json:"en,omitempty"`
+		} `json:"questions,omitempty"`
+		Subject string `json:"subject,omitempty"`
 	} `json:"relationship,omitempty"`
 	Subject string `json:"subject,omitempty"`
 }
