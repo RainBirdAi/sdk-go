@@ -18,13 +18,29 @@ type Session struct {
 	client *Client
 }
 
+// InjectFactSource indicates the source of an injected fact
+type InjectFactSource string
+
+const (
+	// InjectFactSourceSystem indicates that the fact originates from another system (default)
+	InjectFactSourceSystem InjectFactSource = "system"
+	// InjectFactSourceUser indicates that the fact originates from a user or human in the loop
+	InjectFactSourceUser InjectFactSource = "user"
+)
+
+// InjectFactMetadata holds metadata about an injected fact
+type InjectFactMetadata struct {
+	Source InjectFactSource `json:"source,omitempty"`
+}
+
 // InjectFact is the structure of facts to add to a session via the Inject call
 type InjectFact struct {
-	Subject      string      `json:"subject"`
-	Relationship string      `json:"relationship"`
-	Object       interface{} `json:"object"`
-	Certainty    string      `json:"cf"`
-	CertFactor   *int        `json:"certainty,omitempty"`
+	Subject      string             `json:"subject"`
+	Relationship string             `json:"relationship"`
+	Object       interface{}        `json:"object"`
+	Certainty    string             `json:"cf"`
+	CertFactor   *int               `json:"certainty,omitempty"`
+	Metadata     InjectFactMetadata `json:"metadata"`
 }
 
 // CertaintyFactor returns the certainty factor from QAnswer or InjectFact

@@ -32,14 +32,6 @@ func TestSessionInject(t *testing.T) {
 			expectErr:    nil,
 		},
 		{
-			description:  "Specific engine",
-			facts:        []InjectFact{},
-			responseCode: http.StatusOK,
-			expectCalls:  2,
-			expectBody:   "[]",
-			expectErr:    nil,
-		},
-		{
 			description: "Some facts",
 			facts: []InjectFact{
 				{
@@ -57,7 +49,34 @@ func TestSessionInject(t *testing.T) {
 			},
 			responseCode: http.StatusOK,
 			expectCalls:  2,
-			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121"},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122"}]`,
+			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121","metadata":{}},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122","metadata":{}}]`,
+			expectErr:    nil,
+		},
+		{
+			description: "Some facts with metadata",
+			facts: []InjectFact{
+				{
+					Subject:      "foo1",
+					Relationship: "bar1",
+					Object:       "baz1",
+					Certainty:    "121",
+					Metadata: InjectFactMetadata{
+						Source: InjectFactSourceSystem,
+					},
+				},
+				{
+					Subject:      "foo2",
+					Relationship: "bar2",
+					Object:       "baz2",
+					Certainty:    "122",
+					Metadata: InjectFactMetadata{
+						Source: InjectFactSourceUser,
+					},
+				},
+			},
+			responseCode: http.StatusOK,
+			expectCalls:  2,
+			expectBody:   `[{"subject":"foo1","relationship":"bar1","object":"baz1","cf":"121","metadata":{"source":"system"}},{"subject":"foo2","relationship":"bar2","object":"baz2","cf":"122","metadata":{"source":"user"}}]`,
 			expectErr:    nil,
 		},
 		{
