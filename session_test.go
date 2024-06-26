@@ -60,7 +60,7 @@ func TestSessionInject(t *testing.T) {
 					Relationship: "bar1",
 					Object:       "baz1",
 					Certainty:    "121",
-					MetaData: InjectFactMetadata{
+					Metadata: InjectFactMetadata{
 						Source: InjectFactSourceSystem,
 					},
 				},
@@ -69,7 +69,7 @@ func TestSessionInject(t *testing.T) {
 					Relationship: "bar2",
 					Object:       "baz2",
 					Certainty:    "122",
-					MetaData: InjectFactMetadata{
+					Metadata: InjectFactMetadata{
 						Source: InjectFactSourceUser,
 					},
 				},

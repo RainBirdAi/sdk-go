@@ -23,9 +23,9 @@ type InjectFactSource string
 
 const (
 	// InjectFactSourceSystem indicates that the fact originates from another system (default)
-	InjectFactSourceSystem = "system"
+	InjectFactSourceSystem InjectFactSource = "system"
 	// InjectFactSourceUser indicates that the fact originates from a user or human in the loop
-	InjectFactSourceUser = "user"
+	InjectFactSourceUser InjectFactSource = "user"
 )
 
 // InjectFactMetadata holds metadata about an injected fact
@@ -40,7 +40,7 @@ type InjectFact struct {
 	Object       interface{}        `json:"object"`
 	Certainty    string             `json:"cf"`
 	CertFactor   *int               `json:"certainty,omitempty"`
-	MetaData     InjectFactMetadata `json:"metadata,omitempty"`
+	Metadata     InjectFactMetadata `json:"metadata"`
 }
 
 // CertaintyFactor returns the certainty factor from QAnswer or InjectFact
