@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// checkOptionsHeaders helps to check the optional cookies are present in the request
 func checkOptionsHeaders(t *testing.T, r *http.Request, headers http.Header) {
 	for k, vals := range headers {
 		for _, v := range vals {

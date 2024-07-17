@@ -2,6 +2,7 @@ package sdk
 
 import "net/http"
 
+// requestOptions is a struct with options that can be used within the sdk endpoints
 type requestOptions struct {
 	headers http.Header
 }
