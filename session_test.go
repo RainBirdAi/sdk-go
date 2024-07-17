@@ -13,6 +13,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func checkOptionsHeaders(t *testing.T, r *http.Request, headers http.Header) {
+	for k, vals := range headers {
+		for _, v := range vals {
+			assert.Equal(t, v, r.Header.Get(k))
+		}
+
+	}
+}
+
 func TestSessionInject(t *testing.T) {
 	testCases := []struct {
 		description string
@@ -159,6 +168,9 @@ func TestSessionQuery(t *testing.T) {
 		rel         string
 		obj         string
 
+		reqOptions        []CreateOption
+		additionalHeaders http.Header
+
 		responseCode int
 		responseBody string
 		expectCalls  int64
@@ -238,6 +250,42 @@ func TestSessionQuery(t *testing.T) {
 			expectAnswers:  nil,
 			expectErr:      fmt.Errorf(`API returned error 500: { "error": "some JSON returned" }`),
 		},
+		{
+			description: "check the optional headers propagate",
+			sub:         "John",
+			rel:         "lives in",
+			obj:         "",
+
+			reqOptions: []CreateOption{
+				AddHeaders(http.Header{"x-api-source": []string{"natlang"}}),
+			},
+			additionalHeaders: http.Header{"x-api-source": []string{"natlang"}},
+
+			responseCode: http.StatusOK,
+			responseBody: `{
+				"result": [{
+					"certainty": 100,
+					"factID": "thisisthefactid",
+					"object": "England",
+					"relationship": "lives in",
+					"subject": "John"
+				}]
+			}`,
+			expectCalls: 2,
+			expectBody:  `{"subject":"John","relationship":"lives in","object":""}`,
+
+			expectQuestion: []Question{},
+			expectAnswers: []Answer{
+				{
+					Subject:      "John",
+					Relationship: "lives in",
+					Object:       "England",
+					Certainty:    100,
+					FactID:       "thisisthefactid",
+				},
+			},
+			expectErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -261,6 +309,7 @@ func TestSessionQuery(t *testing.T) {
 						assert.Equal(t, "application/json", r.Header.Get("Accept"))
 						assert.Equal(t, "/success-id/query", r.RequestURI)
 						assert.Equal(t, http.MethodPost, r.Method)
+						checkOptionsHeaders(t, r, tc.additionalHeaders)
 
 						body, err := io.ReadAll(r.Body)
 						require.Nil(t, err)
@@ -285,7 +334,7 @@ func TestSessionQuery(t *testing.T) {
 			session, err := client.NewSession("kmid", "", nil, nil)
 			require.Nil(t, err)
 
-			questions, answers, err := session.Query(tc.sub, tc.rel, tc.obj)
+			questions, answers, err := session.Query(tc.sub, tc.rel, tc.obj, tc.reqOptions...)
 			assert.Equal(t, tc.expectQuestion, questions)
 			assert.Equal(t, tc.expectAnswers, answers)
 			assert.Equal(t, tc.expectErr, err)
