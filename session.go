@@ -138,7 +138,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...CreateOption) ([]Question, []Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...RequestOption) ([]Question, []Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
@@ -173,7 +173,7 @@ func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-	reqOptions.AddOptionsHeaders(req)
+	reqOptions.addOptionsHeaders(req)
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {

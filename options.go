@@ -7,8 +7,8 @@ type requestOptions struct {
 	headers http.Header
 }
 
-// AddOptionsHeaders helps adding the headers to the request
-func (ro *requestOptions) AddOptionsHeaders(req *http.Request) {
+// addOptionsHeaders helps adding the headers to the request
+func (ro *requestOptions) addOptionsHeaders(req *http.Request) {
 	if ro != nil {
 		for k, vals := range ro.headers {
 			for _, v := range vals {
@@ -18,13 +18,18 @@ func (ro *requestOptions) AddOptionsHeaders(req *http.Request) {
 	}
 }
 
-// CreateOption add optional parameter to `createFile` mutation.
-type CreateOption func(o requestOptions) requestOptions
+// RequestOption add optional parameter to sdk requests
+type RequestOption func(o requestOptions) requestOptions
 
 // AddHeaders assigns the headers to the requestOptions struct
-func AddHeaders(headers http.Header) CreateOption {
+func AddHeaders(headers http.Header) RequestOption {
 	return func(o requestOptions) requestOptions {
-		o.headers = headers.Clone()
+		o.headers = o.headers.Clone()
+		for k, vals := range headers {
+			for _, v := range vals {
+				o.headers.Add(k, v)
+			}
+		}
 		return o
 	}
 }
