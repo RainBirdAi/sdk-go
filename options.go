@@ -24,10 +24,12 @@ type RequestOption func(o requestOptions) requestOptions
 // AddHeaders assigns the headers to the requestOptions struct
 func AddHeaders(headers http.Header) RequestOption {
 	return func(o requestOptions) requestOptions {
-		o.headers = o.headers.Clone()
-		for k, vals := range headers {
-			for _, v := range vals {
-				o.headers.Add(k, v)
+		if headers != nil {
+			o.headers = headers.Clone()
+			for k, vals := range headers {
+				for _, v := range vals {
+					o.headers.Add(k, v)
+				}
 			}
 		}
 		return o
