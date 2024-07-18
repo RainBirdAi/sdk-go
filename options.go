@@ -24,7 +24,7 @@ type CreateOption func(o requestOptions) requestOptions
 // AddHeaders assigns the headers to the requestOptions struct
 func AddHeaders(headers http.Header) CreateOption {
 	return func(o requestOptions) requestOptions {
-		o.headers = headers
+		o.headers = headers.Clone()
 		return o
 	}
 }
