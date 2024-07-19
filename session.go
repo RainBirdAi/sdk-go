@@ -138,12 +138,12 @@ func (s *Session) Inject(facts []InjectFact) error {
 // obj and/or both blank ("") will instruct the engine in what you wish to find
 // out. For example, s.Query("John", "speaks", "") will instruct the engine
 // that you wish to find out which languages John speaks.
-func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...RequestOption) ([]Question, []Answer, error) {
+func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...QueryOption) ([]Question, []Answer, error) {
 	if rel == "" {
 		return nil, nil, ErrQueryBlankRelationship
 	}
 
-	var reqOptions requestOptions
+	var reqOptions queryOption
 	for _, c := range optionConstructors {
 		reqOptions = c(reqOptions)
 	}

@@ -169,7 +169,7 @@ func TestSessionQuery(t *testing.T) {
 		rel         string
 		obj         string
 
-		reqOptions        []RequestOption
+		reqOptions        []QueryOption
 		additionalHeaders http.Header
 
 		responseCode int
@@ -257,7 +257,7 @@ func TestSessionQuery(t *testing.T) {
 			rel:         "lives in",
 			obj:         "",
 
-			reqOptions: []RequestOption{
+			reqOptions: []QueryOption{
 				AddHeaders(http.Header{"x-api-source": []string{"natlang"}}),
 			},
 			additionalHeaders: http.Header{"x-api-source": []string{"natlang"}},
