@@ -2,7 +2,7 @@ package sdk
 
 import "net/http"
 
-// queryOption is a struct with options that can be used within the sdk endpoints
+// queryOption is a struct with options that can be used within the sdk query endpoint
 type queryOption struct {
 	headers http.Header
 }
