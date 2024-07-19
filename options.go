@@ -2,7 +2,7 @@ package sdk
 
 import "net/http"
 
-// requestOptions is a struct with options that can be used within the sdk endpoints
+// queryOption is a struct with options that can be used within the sdk endpoints
 type queryOption struct {
 	headers http.Header
 }
@@ -18,10 +18,10 @@ func (ro *queryOption) addOptionsHeaders(req *http.Request) {
 	}
 }
 
-// RequestOption add optional parameter to sdk requests
+// QueryOption add optional parameter to sdk query endpoint
 type QueryOption func(o queryOption) queryOption
 
-// AddHeaders assigns the headers to the requestOptions struct
+// AddHeaders assigns the headers to the queryOption struct
 func AddHeaders(headers http.Header) QueryOption {
 	return func(o queryOption) queryOption {
 		if headers != nil {
