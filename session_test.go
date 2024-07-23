@@ -17,11 +17,8 @@ import (
 func checkOptionsHeaders(t *testing.T, r *http.Request, headers http.Header) {
 	for k, vals := range headers {
 		for _, v := range vals {
-			fmt.Println(k)
-			fmt.Println(r.Header.Get(k))
 			assert.Equal(t, v, r.Header.Get(k))
 		}
-
 	}
 }
 

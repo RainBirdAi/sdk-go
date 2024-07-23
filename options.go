@@ -24,9 +24,13 @@ type QueryOption func(o queryOption) queryOption
 // AddHeaders assigns the headers to the queryOption struct
 func AddHeaders(headers http.Header) QueryOption {
 	return func(o queryOption) queryOption {
-		for k, vals := range headers {
-			for _, v := range vals {
-				o.headers.Add(k, v)
+		if o.headers == nil {
+			o.headers = headers.Clone()
+		} else {
+			for k, vals := range headers {
+				for _, v := range vals {
+					o.headers.Add(k, v)
+				}
 			}
 		}
 		return o
