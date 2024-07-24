@@ -19,7 +19,6 @@ func checkOptionsHeaders(t *testing.T, r *http.Request, headers http.Header) {
 		for _, v := range vals {
 			assert.Equal(t, v, r.Header.Get(k))
 		}
-
 	}
 }
 
