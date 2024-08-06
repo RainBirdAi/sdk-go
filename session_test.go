@@ -369,7 +369,7 @@ func TestSessionResponse(t *testing.T) {
 			},
 
 			expectCalls:  2,
-			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100","unanswered":false}]}`,
 			responseCode: http.StatusOK,
 			responseBody: `{
 				"question": {
@@ -416,7 +416,7 @@ func TestSessionResponse(t *testing.T) {
 			},
 
 			expectCalls:  2,
-			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100","unanswered":false}]}`,
 			responseCode: http.StatusOK,
 			responseBody: `{
 				"question": {
@@ -489,7 +489,7 @@ func TestSessionResponse(t *testing.T) {
 			},
 
 			expectCalls:  2,
-			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":12,"cf":"100"}]}`,
+			expectBody:   `{"answers":[{"subject":"John","relationship":"Speaks","object":12,"cf":"100","unanswered":false}]}`,
 			responseCode: http.StatusOK,
 			responseBody: `{
 				"question": {
@@ -538,7 +538,7 @@ func TestSessionResponse(t *testing.T) {
 			},
 
 			expectCalls:     2,
-			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100","unanswered":false}]}`,
 			responseCode:    http.StatusBadRequest,
 			responseBody:    "Foo bar baz",
 			expectQuestions: nil,
@@ -557,7 +557,7 @@ func TestSessionResponse(t *testing.T) {
 			},
 
 			expectCalls:     2,
-			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100"}]}`,
+			expectBody:      `{"answers":[{"subject":"John","relationship":"Speaks","object":"English","cf":"100","unanswered":false}]}`,
 			responseCode:    http.StatusInternalServerError,
 			responseBody:    "Foo bar baz",
 			expectQuestions: nil,
