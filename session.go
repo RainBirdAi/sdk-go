@@ -77,6 +77,7 @@ type QAnswer struct {
 	CF           string      `json:"cf"`
 	Certainty    *int        `json:"certainty,omitempty"`
 	Answer       string      `json:"answer,omitempty"`
+	Unanswered   bool        `json:"unanswered,omitempty"`
 }
 
 func (q *QAnswer) CertaintyFactor() int {
