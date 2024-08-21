@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,6 +36,9 @@ var (
 	// ErrNewSessionInvalidKMID is returned when a new session is being started,
 	// but the KMID is invalid (for example, due to being empty like "")
 	ErrNewSessionInvalidKMID = errors.New("NewSessionInvalidKMID")
+
+	// ErrFactNotFound represents a fact not found error.
+	ErrFactNotFound = errors.New("fact not found")
 )
 
 // NoContext is the default way to interact with the engine; without defining a
@@ -151,7 +154,7 @@ func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, versi
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +206,7 @@ func (c *Client) Version() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -241,9 +244,13 @@ func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, ErrFactNotFound
 		}
 
 		return nil, fmt.Errorf(
@@ -289,7 +296,7 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -365,7 +372,7 @@ func (c *Client) session(sessionID, filterStr string) (*http.Response, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := ioutil.ReadAll(resp.Body)
+		rawBody, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
 		}
