@@ -205,7 +205,7 @@ type ConditionRelationship struct {
 	ObjectType   string      `json:"objectType,omitempty"`
 	Relationship string      `json:"relationship,omitempty"`
 	Subject      interface{} `json:"subject,omitempty"`
-	salience     int         `json:"salience,omitempty"`
+	salience     int
 }
 
 // Type of ConditionType
@@ -222,7 +222,7 @@ func (cr ConditionRelationship) Salience() int {
 type ConditionExpression struct {
 	WasMet     bool       `json:"wasMet,omitempty"`
 	Expression Expression `json:"expression,omitempty"`
-	salience   int        `json:"salience,omitempty"`
+	salience   int
 }
 
 // Expression is the text representation of a knowledge map expression

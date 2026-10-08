@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -130,7 +129,10 @@ func (s *Session) Inject(facts []InjectFact) error {
 	defer resp.Body.Close()
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("API returned error %d", resp.StatusCode)
+		return &APIError{
+			StatusCode: resp.StatusCode,
+			message:    fmt.Sprintf("API returned error %d", resp.StatusCode),
+		}
 	}
 	return nil
 }
@@ -184,16 +186,7 @@ func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return nil, nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, nil, readAPIError(resp)
 	}
 
 	var body struct {
@@ -250,16 +243,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return nil, nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, nil, readAPIError(resp)
 	}
 
 	var body struct {
@@ -304,16 +288,7 @@ func (s *Session) Undo() ([]Question, []Answer, error) {
 
 	// The API doesn't match documentation. Workaround.
 	if resp.StatusCode >= 400 {
-		rawBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return nil, nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, nil, readAPIError(resp)
 	}
 
 	var body struct {
