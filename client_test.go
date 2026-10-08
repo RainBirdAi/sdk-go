@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -130,7 +131,7 @@ func TestClientNewSessionStartCalls(t *testing.T) {
 
 			expectCalls: 1,
 			expectID:    "",
-			expectErr:   errors.New("API returned an error 400: Bad request"),
+			expectErr:   &APIError{StatusCode: 400, Body: "Bad request", message: "API returned an error 400: Bad request"},
 		},
 		{
 			description: "Handle good code but no ID",
@@ -289,7 +290,7 @@ func TestClientVersion(t *testing.T) {
 
 			expectCalls: 1,
 			expectRet:   "",
-			expectErr:   errors.New("API returned error code 500: Foobarbaz"),
+			expectErr:   &APIError{StatusCode: 500, Body: "Foobarbaz", message: "API returned error code 500: Foobarbaz"},
 		},
 	}
 
@@ -341,14 +342,14 @@ func TestEvidence(t *testing.T) {
 			responseCode:   http.StatusBadRequest,
 			responseBody:   stringPtr("Foo bar baz"),
 			expectEvidence: nil,
-			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+			expectErr:      &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description:    "Internal server error",
 			responseCode:   http.StatusInternalServerError,
 			responseBody:   stringPtr("Foo bar baz"),
 			expectEvidence: nil,
-			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+			expectErr:      &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 		{
 			description:  "Returns correct evidence for rule",
@@ -896,14 +897,14 @@ func TestInteractionLog(t *testing.T) {
 			responseCode:         http.StatusBadRequest,
 			responseBody:         stringPtr("Foo bar baz"),
 			expectInteractionLog: nil,
-			expectErr:            errors.New("API returned error 400: Foo bar baz"),
+			expectErr:            &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description:          "Internal server error",
 			responseCode:         http.StatusInternalServerError,
 			responseBody:         stringPtr("Foo bar baz"),
 			expectInteractionLog: nil,
-			expectErr:            errors.New("API returned error 500: Foo bar baz"),
+			expectErr:            &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 	}
 
@@ -954,14 +955,14 @@ func TestSessionKmVersion(t *testing.T) {
 			responseCode: http.StatusBadRequest,
 			responseBody: stringPtr("Foo bar baz"),
 			expectKm:     nil,
-			expectErr:    errors.New("API returned error 400: Foo bar baz"),
+			expectErr:    &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description:  "Internal server error",
 			responseCode: http.StatusInternalServerError,
 			responseBody: stringPtr("Foo bar baz"),
 			expectKm:     nil,
-			expectErr:    errors.New("API returned error 500: Foo bar baz"),
+			expectErr:    &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 		{
 			description:  "Returns version info",
@@ -1030,14 +1031,14 @@ func TestSessionFacts(t *testing.T) {
 			responseCode: http.StatusBadRequest,
 			responseBody: stringPtr("Foo bar baz"),
 			expectFacts:  nil,
-			expectErr:    errors.New("API returned error 400: Foo bar baz"),
+			expectErr:    &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description:  "Internal server error",
 			responseCode: http.StatusInternalServerError,
 			responseBody: stringPtr("Foo bar baz"),
 			expectFacts:  nil,
-			expectErr:    errors.New("API returned error 500: Foo bar baz"),
+			expectErr:    &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 		{
 			description:  "Returns facts info",
@@ -1248,4 +1249,28 @@ func TestSessionFacts(t *testing.T) {
 		})
 	}
 
+}
+
+func TestAPIErrorCarriesTheStatusCode(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "Bad request!", http.StatusBadRequest)
+	}))
+	defer srv.Close()
+
+	client := &Client{
+		APIKey:         "1234567890-1234-1234-1234-1234567890ab",
+		EnvironmentURL: srv.URL,
+		HTTPClient:     srv.Client(),
+	}
+	session, err := client.ResumeSession("session-id")
+	require.Nil(t, err)
+
+	_, _, err = session.Query("Fred", "speaks", "")
+
+	var apiErr *APIError
+	require.True(t, errors.As(fmt.Errorf("wrapped: %w", err), &apiErr))
+	assert.Equal(t, http.StatusBadRequest, apiErr.StatusCode)
+	assert.Equal(t, "Bad request!\n", apiErr.Body)
 }

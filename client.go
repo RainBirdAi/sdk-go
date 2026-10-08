@@ -41,6 +41,38 @@ var (
 	ErrFactNotFound = errors.New("fact not found")
 )
 
+// APIError is returned when the API responds with an error status, so callers
+// can tell a rejected request (4xx) from a failing engine (5xx)
+type APIError struct {
+	StatusCode int
+	Body       string
+
+	// message keeps each call's existing error text for callers matching on it
+	message string
+}
+
+func (e *APIError) Error() string {
+	return e.message
+}
+
+func newAPIError(statusCode int, body, format string) *APIError {
+	return &APIError{
+		StatusCode: statusCode,
+		Body:       body,
+		message:    fmt.Sprintf(format, statusCode, body),
+	}
+}
+
+// readAPIError builds an APIError from a failed response, with the body in the
+// usual "API returned error <code>: <body>" text
+func readAPIError(resp *http.Response) error {
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return newAPIError(resp.StatusCode, string(rawBody), "API returned error %d: %s")
+}
+
 // NoContext is the default way to interact with the engine; without defining a
 // context in which to work
 const NoContext string = ""
@@ -159,11 +191,7 @@ func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, versi
 			return nil, err
 		}
 
-		return nil, fmt.Errorf(
-			"API returned an error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, newAPIError(resp.StatusCode, string(rawBody), "API returned an error %d: %s")
 	}
 
 	var body struct {
@@ -212,11 +240,7 @@ func (c *Client) Version() (string, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		return "", fmt.Errorf(
-			"API returned error code %d: %s",
-			resp.StatusCode,
-			body,
-		)
+		return "", newAPIError(resp.StatusCode, string(body), "API returned error code %d: %s")
 	}
 
 	return string(body), err
@@ -253,11 +277,7 @@ func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) 
 			return nil, ErrFactNotFound
 		}
 
-		return nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, newAPIError(resp.StatusCode, string(rawBody), "API returned error %d: %s")
 	}
 
 	var response evidenceResponse
@@ -296,16 +316,7 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, readAPIError(resp)
 	}
 
 	var response []InteractionResponse
@@ -372,16 +383,7 @@ func (c *Client) session(sessionID, filterStr string) (*http.Response, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		rawBody, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf(
-			"API returned error %d: %s",
-			resp.StatusCode,
-			string(rawBody),
-		)
+		return nil, readAPIError(resp)
 	}
 
 	return resp, nil

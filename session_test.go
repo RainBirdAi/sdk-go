@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -94,7 +92,7 @@ func TestSessionInject(t *testing.T) {
 			responseCode: http.StatusBadRequest,
 			expectCalls:  2,
 			expectBody:   "[]",
-			expectErr:    errors.New("API returned error 400"),
+			expectErr:    &APIError{StatusCode: 400, message: "API returned error 400"},
 		},
 		{
 			description:  "Bad request",
@@ -102,7 +100,7 @@ func TestSessionInject(t *testing.T) {
 			responseCode: http.StatusInternalServerError,
 			expectCalls:  2,
 			expectBody:   "[]",
-			expectErr:    errors.New("API returned error 500"),
+			expectErr:    &APIError{StatusCode: 500, message: "API returned error 500"},
 		},
 	}
 
@@ -233,7 +231,7 @@ func TestSessionQuery(t *testing.T) {
 
 			expectQuestion: nil,
 			expectAnswers:  nil,
-			expectErr:      fmt.Errorf("API returned error 400: Foo bar baz"),
+			expectErr:      &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description: "Handle internal server error",
@@ -248,7 +246,7 @@ func TestSessionQuery(t *testing.T) {
 
 			expectQuestion: nil,
 			expectAnswers:  nil,
-			expectErr:      fmt.Errorf(`API returned error 500: { "error": "some JSON returned" }`),
+			expectErr:      &APIError{StatusCode: 500, Body: `{ "error": "some JSON returned" }`, message: `API returned error 500: { "error": "some JSON returned" }`},
 		},
 		{
 			description: "check the optional headers propagate",
@@ -543,7 +541,7 @@ func TestSessionResponse(t *testing.T) {
 			responseBody:    "Foo bar baz",
 			expectQuestions: nil,
 			expectAnswers:   nil,
-			expectErr:       errors.New("API returned error 400: Foo bar baz"),
+			expectErr:       &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description: "Internal server error",
@@ -562,7 +560,7 @@ func TestSessionResponse(t *testing.T) {
 			responseBody:    "Foo bar baz",
 			expectQuestions: nil,
 			expectAnswers:   nil,
-			expectErr:       errors.New("API returned error 500: Foo bar baz"),
+			expectErr:       &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 	}
 
@@ -675,7 +673,7 @@ func TestSessionUndo(t *testing.T) {
 			responseBody:   "Foo bar baz",
 			expectQuestion: nil,
 			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 400: Foo bar baz"),
+			expectErr:      &APIError{StatusCode: 400, Body: "Foo bar baz", message: "API returned error 400: Foo bar baz"},
 		},
 		{
 			description: "Internal server error",
@@ -684,7 +682,7 @@ func TestSessionUndo(t *testing.T) {
 			responseBody:   "Foo bar baz",
 			expectQuestion: nil,
 			expectAnswers:  nil,
-			expectErr:      errors.New("API returned error 500: Foo bar baz"),
+			expectErr:      &APIError{StatusCode: 500, Body: "Foo bar baz", message: "API returned error 500: Foo bar baz"},
 		},
 	}
 
