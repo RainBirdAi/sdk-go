@@ -15,6 +15,8 @@ type Session struct {
 	ID string
 
 	client *Client
+
+	engine string
 }
 
 // InjectFactSource indicates the source of an injected fact
@@ -103,6 +105,14 @@ var (
 	ErrQueryBlankRelationship = errors.New("blank relationship")
 )
 
+// set req's `x-rainbird-engine` header if applicable
+func setEngineHeader(req *http.Request, engine string) {
+	if engine == "" {
+		return
+	}
+	req.Header.Set(engineHeader, engine)
+}
+
 // Inject adds facts to a running session
 func (s *Session) Inject(facts []InjectFact) error {
 	// NOTE: Inject takes invalid JSON and doesn't match the API docs!
@@ -120,6 +130,7 @@ func (s *Session) Inject(facts []InjectFact) error {
 		return err
 	}
 
+	setEngineHeader(req, s.engine)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := s.client.HTTP().Do(req)
@@ -177,6 +188,7 @@ func (s *Session) Query(sub, rel string, obj interface{}, optionConstructors ...
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 	reqOptions.addOptionsHeaders(req)
+	setEngineHeader(req, s.engine)
 
 	resp, err := s.client.HTTP().Do(req)
 	if err != nil {
@@ -232,6 +244,7 @@ func (s *Session) Response(answers []QAnswer) ([]Question, []Answer, error) {
 		return nil, nil, err
 	}
 
+	setEngineHeader(req, s.engine)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -278,6 +291,7 @@ func (s *Session) Undo() ([]Question, []Answer, error) {
 		return nil, nil, err
 	}
 
+	setEngineHeader(req, s.engine)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := s.client.HTTP().Do(req)

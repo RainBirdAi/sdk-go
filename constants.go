@@ -9,3 +9,5 @@ const (
 
 // Version is the version of this SDK
 const Version = "0.7.0"
+
+const engineHeader = "x-rainbird-engine"

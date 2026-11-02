@@ -23,6 +23,10 @@ type Client struct {
 	// http.DefaultClient with which to make network calls. Good for testing,
 	// intercepting, or other advanced uses. Optional.
 	HTTPClient *http.Client
+
+	// For selecting if the experimental engine should be used
+	// e.g. 'v2.0', 'rbx'
+	Engine string
 }
 
 var (
@@ -176,6 +180,7 @@ func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, versi
 		return nil, err
 	}
 
+	setEngineHeader(req, c.Engine)
 	req.SetBasicAuth(c.APIKey, "")
 	req.Header.Set("Accept", "application/json")
 
@@ -209,12 +214,13 @@ func (c *Client) NewSession(kmID string, contextID string, useDraft *bool, versi
 	return &Session{
 		ID:     body.ID,
 		client: c,
+		engine: c.Engine,
 	}, nil
 }
 
 // ResumeSession resumes a session from the given ID
 func (c *Client) ResumeSession(sessionID string) (*Session, error) {
-	return &Session{ID: sessionID, client: c}, nil
+	return &Session{ID: sessionID, client: c, engine: c.Engine}, nil
 }
 
 // Version contacts the engine API and retrieves its version information
@@ -228,6 +234,7 @@ func (c *Client) Version() (string, error) {
 		return "", err
 	}
 
+	setEngineHeader(req, c.Engine)
 	resp, err := c.HTTP().Do(req)
 	if err != nil {
 		return "", err
@@ -256,6 +263,7 @@ func (c *Client) Evidence(sessionID string, factID string, evidenceKey *string) 
 	if err != nil {
 		return nil, err
 	}
+	setEngineHeader(req, c.Engine)
 	req.Header.Set("Content-Type", "application/json")
 	if evidenceKey != nil {
 		req.Header.Set("x-evidence-key", *evidenceKey)
@@ -304,6 +312,7 @@ func (c *Client) Interactions(sessionID string, interactionKey *string) ([]Inter
 	if err != nil {
 		return nil, err
 	}
+	setEngineHeader(req, c.Engine)
 	req.Header.Set("Content-Type", "application/json")
 	if interactionKey != nil {
 		req.Header.Set("x-interaction-key", *interactionKey)
@@ -372,10 +381,11 @@ func (c *Client) session(sessionID, filterStr string) (*http.Response, error) {
 		c.EnvironmentURL+"/analysis/session/"+sessionID+"?filter="+filterStr,
 		nil,
 	)
-	req.SetBasicAuth(c.APIKey, "")
 	if err != nil {
 		return nil, err
 	}
+	setEngineHeader(req, c.Engine)
+	req.SetBasicAuth(c.APIKey, "")
 
 	resp, err := c.HTTP().Do(req)
 	if err != nil {
